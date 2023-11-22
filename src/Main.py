@@ -17,12 +17,14 @@ class Main:
     def mainloop(self) -> None:
 
         game = self.game
+        board = game.board
         screen = self.screen
         dragPiece = game.dragPiece
 
         # Game loop here. Big boy motherfucka
         while True:
             game.drawChessBoard(screen)
+            game.showMoves(screen)
             game.drawPieces(screen)
 
             # Draw piece on top of other stuff when dragging, to avoid clipping
@@ -38,16 +40,23 @@ class Main:
                     clickedRow = dragPiece.mouseY // squareSize
                     clickedCol = dragPiece.mouseX // squareSize
 
-                    if game.board.squares[clickedRow][clickedCol].hasPiece():
-                        piece = game.board.squares[clickedRow][clickedCol].piece
+                    if board.squares[clickedRow][clickedCol].hasPiece():
+                        piece = board.squares[clickedRow][clickedCol].piece
+                        board.possibleMoves(piece, clickedRow, clickedCol)
                         dragPiece.saveInitialPos(event.pos)
                         dragPiece.startDraggingPiece(piece)
-                        dragPiece.updateBlit(screen)
+
+                        game.showMoves(screen)
+
+
+                        #dragPiece.updateBlit(screen)
+
 
                 if event.type == pygame.MOUSEMOTION:
                     if dragPiece.isDragging:
                         dragPiece.updateMouse(event.pos)
                         game.drawChessBoard(screen)
+                        game.showMoves(screen)
                         game.drawPieces(screen)
                         dragPiece.updateBlit(screen)
 

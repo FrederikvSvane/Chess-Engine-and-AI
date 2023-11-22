@@ -38,3 +38,14 @@ class Game:
                         piece.texture_rect = image.get_rect(center=imageCenter)
                         surface.blit(image, piece.texture_rect)
                 
+    def showMoves(self, surface):
+        if self.dragPiece.isDragging:
+            piece = self.dragPiece.piece
+
+            for move in piece.moves:
+                color = pygame.Color("yellow") if (move.end.row + move.end.col) % 2 == 0 else pygame.Color("orange")
+                square = (move.end.col * squareSize, move.end.row * squareSize, squareSize, squareSize)
+                pygame.draw.rect(surface, color, square)
+
+
+                

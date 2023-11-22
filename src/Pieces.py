@@ -19,10 +19,10 @@ class Piece:
             f'assets/Images/Pieces/{self.color}{self.name}PNG.png'
         )
         image = pygame.image.load(imageString)
-        
+
         self.image = pygame.transform.smoothscale(image, (squareSize, squareSize))
     
-    def addMoves(self, moves):
+    def addMove(self, moves):
         self.moves.append(moves)
 
 

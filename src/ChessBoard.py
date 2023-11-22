@@ -1,6 +1,7 @@
 from GlobalConstants import *
 from BoardSquare import BoardSquare
 from Pieces import *
+from Move import Move
 
 
 class ChessBoard:
@@ -47,3 +48,61 @@ class ChessBoard:
         self.squares[row_other][4] = BoardSquare(row_other, 4, King(color))
 
 
+    def possibleMoves(self, piece, row, col):
+            # Calculates possible moves for a piece on a given square
+
+
+            # Nested methods for calculating possible moves for each piece
+            def pawnMoves(piece, row, col):
+                pass
+
+            def knightMoves(piece, row, col):
+                possibleMoves = [
+                    (row+2, col+1),
+                    (row+1, col+2),
+                    (row-1, col+2),
+                    (row-2, col+1),
+                    (row-2, col-1),
+                    (row-1, col-2),
+                    (row+1, col-2),
+                    (row+2, col-1)
+                ]
+
+                for move in possibleMoves:
+                    newRow, newCol = move
+                    if BoardSquare.isOnBoard(newRow, newCol):
+                        if self.squares[newRow][newCol].isEmptyOrEnemy(piece.color):
+                            start = BoardSquare(row, col)
+                            end = BoardSquare(newRow, newCol)
+                            move = Move(start, end)
+                            piece.addMove(move)
+                            pass
+                        
+
+            def bishopMoves(piece, row, col):
+                pass
+
+            def rookMoves(piece, row, col):
+                pass
+
+            def queenMoves(piece, row, col):
+                pass
+
+            def kingMoves(piece, row, col):
+                pass
+
+
+            # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
+            if piece.name == 'Pawn':
+                pass
+            elif piece.name == 'Knight':
+                knightMoves(piece, row, col)
+
+            elif piece.name == 'Bishop':
+                pass
+            elif piece.name == 'Rook':
+                pass
+            elif piece.name == 'Queen':
+                pass
+            elif piece.name == 'King':
+                pass
