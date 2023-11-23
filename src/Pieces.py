@@ -2,6 +2,9 @@ import pygame
 import os
 
 from GlobalConstants import *
+from src.BoardSquare import BoardSquare
+from src.Move import Move
+
 
 class Piece:
     def __init__(self, name, color, value: float, image=None, texture_rect=None):
@@ -25,7 +28,6 @@ class Piece:
     def addMove(self, moves):
         self.moves.append(moves)
 
-
 class Pawn(Piece):
 
     def __init__(self, color: str):
@@ -42,7 +44,6 @@ class Knight(Piece):
     def __init__(self, color: str):
         super().__init__(name='Knight', color=color, value=3.0)
 
-
 class Bishop(Piece):
     def __init__(self, color: str):
         super().__init__(name='Bishop', color=color, value=3.0)
@@ -56,6 +57,8 @@ class Rook(Piece):
 class Queen(Piece):
     def __init__(self, color: str):
         super().__init__(name='Queen', color=color, value=9.0)
+
+
 
 
 class King(Piece):

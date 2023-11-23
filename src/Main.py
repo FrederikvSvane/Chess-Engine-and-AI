@@ -1,11 +1,13 @@
 import os
 import sys
 import contextlib
+
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame
 
 from GlobalConstants import *
 from Game import Game
+
 
 class Main:
     def __init__(self) -> None:
@@ -36,7 +38,7 @@ class Main:
                 # Drag logic                
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     dragPiece.updateMouse(event.pos)
-                    
+
                     clickedRow = dragPiece.mouseY // squareSize
                     clickedCol = dragPiece.mouseX // squareSize
 
@@ -48,9 +50,7 @@ class Main:
 
                         game.showMoves(screen)
 
-
-                        #dragPiece.updateBlit(screen)
-
+                        # dragPiece.updateBlit(screen)
 
                 if event.type == pygame.MOUSEMOTION:
                     if dragPiece.isDragging:
@@ -62,13 +62,11 @@ class Main:
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     dragPiece.stopDraggingPiece()
-                
 
                 # Quit game
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-
 
             # Update relevant parts of display (defaults to all/whole display)
             pygame.display.update()
@@ -76,4 +74,3 @@ class Main:
 
 main = Main()
 main.mainloop()
-
