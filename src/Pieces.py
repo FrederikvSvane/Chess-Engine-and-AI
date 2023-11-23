@@ -2,8 +2,8 @@ import pygame
 import os
 
 from GlobalConstants import *
-from src.BoardSquare import BoardSquare
-from src.Move import Move
+from BoardSquare import BoardSquare
+from Move import Move
 
 
 class Piece:
@@ -27,6 +27,9 @@ class Piece:
     
     def addMove(self, moves):
         self.moves.append(moves)
+
+    def clearMoves(self):
+        self.moves.clear()
 
 class Pawn(Piece):
 

@@ -1,6 +1,7 @@
 import os
 import sys
 import contextlib
+from Move import Move
 
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame
@@ -26,7 +27,10 @@ class Main:
         # Game loop here. Big boy motherfucka
         while True:
             game.drawChessBoard(screen)
+            game.showLastMove(screen)
             game.showMoves(screen)
+            if dragPiece.isDragging:
+                game.showHoveredSquare(screen)
             game.drawPieces(screen)
 
             # Draw piece on top of other stuff when dragging, to avoid clipping
@@ -44,24 +48,56 @@ class Main:
 
                     if board.squares[clickedRow][clickedCol].hasPiece():
                         piece = board.squares[clickedRow][clickedCol].piece
-                        board.possibleMoves(piece, clickedRow, clickedCol)
-                        dragPiece.saveInitialPos(event.pos)
-                        dragPiece.startDraggingPiece(piece)
 
-                        game.showMoves(screen)
+                        #Check if color of piece matches the player turn
+                        if piece.color == game.currentPlayer:
+                            board.possibleMoves(piece, clickedRow, clickedCol)
+                            dragPiece.saveInitialPos(event.pos)
+                            dragPiece.startDraggingPiece(piece)
+
+                            game.drawChessBoard(screen)
+                            game.showMoves(screen)
+                            game.drawPieces(screen) 
 
                         # dragPiece.updateBlit(screen)
 
                 if event.type == pygame.MOUSEMOTION:
+                    row = event.pos[1] // squareSize
+                    col = event.pos[0] // squareSize
+                    game.setHoveredSquare(row, col)
+
                     if dragPiece.isDragging:
                         dragPiece.updateMouse(event.pos)
                         game.drawChessBoard(screen)
+                        game.showLastMove(screen)
                         game.showMoves(screen)
                         game.drawPieces(screen)
+                        game.showHoveredSquare(screen)
                         dragPiece.updateBlit(screen)
 
                 if event.type == pygame.MOUSEBUTTONUP:
+                    
+                    if dragPiece.isDragging:
+                        dragPiece.updateMouse(event.pos)
+                        chosenRow = dragPiece.mouseY // squareSize
+                        chosenCol = dragPiece.mouseX // squareSize
+
+                        startSquare = board.squares[dragPiece.initialRow][dragPiece.initialCol]
+                        endSquare = board.squares[chosenRow][chosenCol]
+                        move = Move(startSquare, endSquare)
+
+                        if board.validMove(dragPiece.piece, move):
+                            board.movePiece(dragPiece.piece, move)
+
+                            #After making the move, draw the pieces
+                            game.drawChessBoard(screen)
+                            game.showLastMove(screen)
+                            game.drawPieces(screen)
+                            game.nextTurn()
+                        dragPiece.piece.clearMoves()
+                    
                     dragPiece.stopDraggingPiece()
+
 
                 # Quit game
                 if event.type == pygame.QUIT:

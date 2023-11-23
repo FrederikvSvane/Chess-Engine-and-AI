@@ -9,6 +9,8 @@ class Game:
     def __init__(self) -> None:
         self.board = ChessBoard()
         self.dragPiece = DragPiece()
+        self.currentPlayer = 'White'
+        self.hoveredSquare = None
 
 
     def drawChessBoard(self, surface) -> None:
@@ -42,10 +44,41 @@ class Game:
         if self.dragPiece.isDragging:
             piece = self.dragPiece.piece
 
+            # The color and size of the circle
+            circle_color = (128, 128, 128, 128)  # RGBA for semi-transparent grey
+            circle_radius = squareSize // 7  # Adjust the radius as needed
+
             for move in piece.moves:
-                color = pygame.Color("yellow") if (move.end.row + move.end.col) % 2 == 0 else pygame.Color("orange")
-                square = (move.end.col * squareSize, move.end.row * squareSize, squareSize, squareSize)
+
+                # Create a temporary surface with alpha
+                temp_surface = pygame.Surface((squareSize, squareSize), pygame.SRCALPHA)
+                pygame.draw.circle(temp_surface, circle_color, (squareSize // 2, squareSize // 2), circle_radius)
+
+                surface.blit(temp_surface, (move.end.col * squareSize, move.end.row * squareSize))
+    
+    def showHoveredSquare(self, surface):
+        if self.hoveredSquare:
+            color = (180, 180, 180)
+            square = (self.hoveredSquare.col * squareSize, self.hoveredSquare.row * squareSize, squareSize, squareSize)
+            pygame.draw.rect(surface, color, square, width=4)
+
+    
+    def setHoveredSquare(self, row, col):
+        self.hoveredSquare = self.board.squares[row][col]
+
+
+
+    def showLastMove(self, surface):
+        if self.board.lastMove:
+            first = self.board.lastMove.start
+            last = self.board.lastMove.end
+
+            for pos in [first, last]:
+                color = pygame.Color("yellow") if (pos.row + pos.col) % 2 == 0 else pygame.Color("orange")
+                square = (pos.col * squareSize, pos.row * squareSize, squareSize, squareSize)
                 pygame.draw.rect(surface, color, square)
 
+    def nextTurn(self):
+        self.currentPlayer = 'White' if self.currentPlayer == 'Black' else 'Black'
 
                 
