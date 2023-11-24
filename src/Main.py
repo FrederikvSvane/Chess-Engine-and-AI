@@ -107,6 +107,5 @@ class Main:
             # Update relevant parts of display (defaults to all/whole display)
             pygame.display.update()
 
-
 main = Main()
 main.mainloop()

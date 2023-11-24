@@ -63,12 +63,43 @@ class ChessBoard:
         end = move.end
 
         # Updates the backend board
+        captured_piece = self.squares[end.row][end.col].piece
         self.squares[start.row][start.col].piece = None
         self.squares[end.row][end.col].piece = piece
 
         # Register move and clear moves
         piece.moved = True
         piece.clearMoves()
+
+        #Load correct sound
+        if captured_piece is not None:
+            print("Captured piece: ", captured_piece.name)
+            sound_file = "assets/Sounds/CaptureMove.wav"
+        else:
+            print("Normal move")
+            sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
+        
+        # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
+
+        # elif isinstance(move, CastleMove):
+        #     sound_file = "assets/Sounds/Castle.wav"
+        # elif isinstance(piece, Pawn) and (end.row == 0 or end.row == 7):
+        #     sound_file = "assets/Sounds/Promotion.wav"
+        # elif self.isCheck():
+        #     sound_file = "assets/Sounds/Check.wav"
+        # elif self.isCheckmate():
+        #     sound_file = "assets/Sounds/Checkmate.wav"
+
+        #TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
+
+        
+
+        
+
+
+        # Play sound
+        pygame.mixer.music.load(sound_file)
+        pygame.mixer.music.play()
 
         # Update last move for rendering
         self.lastMove = move

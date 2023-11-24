@@ -62,8 +62,6 @@ class Queen(Piece):
         super().__init__(name='Queen', color=color, value=9.0)
 
 
-
-
 class King(Piece):
     def __init__(self, color: str):
         super().__init__(name='King', color=color, value=10000.0)
