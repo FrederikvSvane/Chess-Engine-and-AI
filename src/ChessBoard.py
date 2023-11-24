@@ -73,22 +73,28 @@ class ChessBoard:
 
         #Load correct sound
         if captured_piece is not None:
-            sound_file = "assets/Sounds/CaptureMove.wav"
+            #sound_file = "assets/Sounds/CaptureMove.wav"
+            sound_file = "assets/Sounds/CheckBoomSound.wav"
         else:
             sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
-        
+
         # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
 
         # elif isinstance(move, CastleMove):
         #     sound_file = "assets/Sounds/Castle.wav"
+
         # elif isinstance(piece, Pawn) and (end.row == 0 or end.row == 7):
         #     sound_file = "assets/Sounds/Promotion.wav"
+
         # elif self.isCheck():
         #     sound_file = "assets/Sounds/Check.wav"
+        #     sound_file = "assets/Sounds/CheckBoomSound.wav" :) :) :)
+
         # elif self.isCheckmate():
         #     sound_file = "assets/Sounds/Checkmate.wav"
 
         #TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
+        #måske hotel room service af pitbull
 
         
 
