@@ -2,6 +2,7 @@ import os
 import sys
 import contextlib
 from Move import Move
+from src.BoardSquare import BoardSquare
 
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame
@@ -83,17 +84,20 @@ class Main:
                         chosenCol = dragPiece.mouseX // squareSize
 
                         startSquare = board.squares[dragPiece.initialRow][dragPiece.initialCol]
-                        endSquare = board.squares[chosenRow][chosenCol]
-                        move = Move(startSquare, endSquare)
 
-                        if board.validMove(dragPiece.piece, move):
-                            board.movePiece(dragPiece.piece, move)
+                        if BoardSquare.isOnBoard(chosenRow, chosenCol):
+                            endSquare = board.squares[chosenRow][chosenCol]
+                            move = Move(startSquare, endSquare)
+
+                            if board.validMove(dragPiece.piece, move):
+                                board.movePiece(dragPiece.piece, move)
 
                             #After making the move, draw the pieces
+                                game.nextTurn()
                             game.drawChessBoard(screen)
                             game.showLastMove(screen)
                             game.drawPieces(screen)
-                            game.nextTurn()
+
                         dragPiece.piece.clearMoves()
                     
                     dragPiece.stopDraggingPiece()

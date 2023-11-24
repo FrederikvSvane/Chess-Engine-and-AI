@@ -12,7 +12,7 @@ class BoardSquare:
         return self.row == other.row and self.col == other.col
 
     def hasPiece(self):
-        return self.piece != None
+        return self.piece is not None
 
     def isEmpty(self):
         return not self.hasPiece()
@@ -32,3 +32,5 @@ class BoardSquare:
             if arg < 0 or arg >= boardSize:
                 return False
         return True
+
+

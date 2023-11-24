@@ -62,7 +62,8 @@ class ChessBoard:
         start = move.start
         end = move.end
 
-        # Updates the backend board
+
+            # Updates the backend board
         self.squares[start.row][start.col].piece = None
         self.squares[end.row][end.col].piece = piece
 
