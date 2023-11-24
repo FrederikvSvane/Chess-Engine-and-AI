@@ -2,7 +2,7 @@ import os
 import sys
 import contextlib
 from Move import Move
-from src.BoardSquare import BoardSquare
+from BoardSquare import BoardSquare
 
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame

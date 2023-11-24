@@ -73,10 +73,8 @@ class ChessBoard:
 
         #Load correct sound
         if captured_piece is not None:
-            print("Captured piece: ", captured_piece.name)
             sound_file = "assets/Sounds/CaptureMove.wav"
         else:
-            print("Normal move")
             sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
         
         # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.

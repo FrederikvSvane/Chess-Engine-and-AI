@@ -3,7 +3,7 @@ from ChessBoard import ChessBoard
 from DragPiece import DragPiece
 
 from GlobalConstants import *
-from src import BoardSquare
+from BoardSquare import BoardSquare
 
 
 class Game:
@@ -58,7 +58,7 @@ class Game:
 
                 surface.blit(temp_surface, (move.end.col * squareSize, move.end.row * squareSize))
                 #Draw a rectangle around the square if it has an emenyPiece
-                if BoardSquare.BoardSquare.hasEnemyPiece(self.board.squares[move.end.row][move.end.col], piece.color):
+                if BoardSquare.hasEnemyPiece(self.board.squares[move.end.row][move.end.col], piece.color):
                     temp_surface = pygame.Surface((squareSize, squareSize), pygame.SRCALPHA)
                     #draw a ring around the square
                     pygame.draw.circle(temp_surface, capture_circle, (squareSize // 2, squareSize // 2), capture_radius, width=8)
@@ -72,7 +72,7 @@ class Game:
             pygame.draw.rect(surface, color, square, width=4)
 
     def setHoveredSquare(self, row, col):
-        if BoardSquare.BoardSquare.isOnBoard(row, col):
+        if BoardSquare.isOnBoard(row, col):
             self.hoveredSquare = self.board.squares[row][col]
 
     def showLastMove(self, surface):
