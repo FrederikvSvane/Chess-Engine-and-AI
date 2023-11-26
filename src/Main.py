@@ -21,9 +21,9 @@ class Main:
     def mainloop(self) -> None:
 
         game = self.game
-        board = game.board
+        board = self.game.board
         screen = self.screen
-        dragPiece = game.dragPiece
+        dragPiece = self.game.dragPiece
 
         # Game loop here. Big boy motherfucka
         while True:
@@ -101,6 +101,13 @@ class Main:
                         dragPiece.piece.clearMoves()
                     
                     dragPiece.stopDraggingPiece()
+                
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        game.resetGame()
+                        game = self.game
+                        board = self.game.board
+                        dragPiece = self.game.dragPiece
 
 
                 # Quit game

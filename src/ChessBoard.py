@@ -67,14 +67,25 @@ class ChessBoard:
         self.squares[start.row][start.col].piece = None
         self.squares[end.row][end.col].piece = piece
 
+        # Pawn promotion
+        if isinstance(piece, Pawn):
+            self.checkPromotion(piece, end)
+
+        # Castling
+        if isinstance(piece, King):
+            if self.castling(start, end):
+                diff = end.col - start.col
+                rook = piece.leftRook if diff < 0 else piece.rightRook 
+                self.movePiece(rook, rook.moves[-1])
+
         # Register move and clear moves
         piece.moved = True
         piece.clearMoves()
 
         #Load correct sound
         if captured_piece is not None:
-            #sound_file = "assets/Sounds/CaptureMove.wav"
-            sound_file = "assets/Sounds/CheckBoomSound.wav"
+            sound_file = "assets/Sounds/CaptureMove.wav"
+            #sound_file = "assets/Sounds/CheckBoomSound.wav"
         else:
             sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
 
@@ -108,8 +119,10 @@ class ChessBoard:
         # Update last move for rendering
         self.lastMove = move
 
-
-
+    def checkPromotion(self, piece, end):
+        if (end.row == 0 or end.row == 7):
+            # TODO add a popup window for choosing a piece to promote to
+            self.squares[end.row][end.col].piece = Queen(piece.color)
 
 
     def validMove(self, piece, move):
@@ -263,6 +276,53 @@ class ChessBoard:
                         end = BoardSquare(newRow, newCol)
                         move = Move(start, end)
                         piece.addMove(move)
+            
+            #Castling
+            if not piece.moved:
+                #Queen side
+                leftRook = self.squares[row][0].piece
+                if isinstance(leftRook, Rook) and not leftRook.moved:
+                    for c in range(1, 4):
+                        if self.squares[row][c].hasPiece():
+                            break #If there is a piece in the way, we can't castle
+                        if c == 3:
+                            piece.leftRook = leftRook
+
+                            #Rook move
+                            start = BoardSquare(row, 0)
+                            end = BoardSquare(row, 3)
+                            move = Move(start, end)
+                            leftRook.addMove(move)
+
+                            #King move
+                            start = BoardSquare(row, col)
+                            end = BoardSquare(row, 2)   
+                            move = Move(start, end)
+                            piece.addMove(move)                            
+
+                #King side
+                rightRook = self.squares[row][7].piece
+                if isinstance(rightRook, Rook) and not rightRook.moved:
+                    for c in range(5, 7):
+                        if self.squares[row][c].hasPiece():
+                            break #If there is a piece in the way, we can't castle
+                        if c == 6:
+                            piece.rightRook = rightRook
+
+                            #Rook move
+                            start = BoardSquare(row, 7)
+                            end = BoardSquare(row, 5)
+                            move = Move(start, end)
+                            rightRook.addMove(move)
+
+                            #King move
+                            start = BoardSquare(row, col)
+                            end = BoardSquare(row, 6)   
+                            move = Move(start, end)
+                            piece.addMove(move)         
+
+
+
 
         # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
         if piece.name == 'Pawn': pawnMoves(piece, row, col)
@@ -271,3 +331,7 @@ class ChessBoard:
         elif piece.name == 'Rook': rookMoves()
         elif piece.name == 'Queen': queenMoves()
         elif piece.name == 'King': kingMoves()
+
+
+    def castling(self, start, end):
+        return abs(start.col - end.col) == 2
