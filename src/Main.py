@@ -3,6 +3,7 @@ import sys
 import contextlib
 from Move import Move
 from BoardSquare import BoardSquare
+from GameBoarder import GameBoarder
 
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame
@@ -14,29 +15,35 @@ from Game import Game
 class Main:
     def __init__(self) -> None:
         pygame.init()
-        self.screen = pygame.display.set_mode((windowWidth, windowHeight))
+        self.gameBoarder = GameBoarder(windowWidth + 2 * borderWidth, windowHeight + 2 * borderWidth)
+        self.screen = pygame.display.set_mode((windowWidth + 2 * borderWidth, windowHeight + 2 * borderWidth))
         pygame.display.set_caption("Ultra Mega Chess 9000")
         self.game = Game()
+
 
     def mainloop(self) -> None:
 
         game = self.game
         board = game.board
-        screen = self.screen
         dragPiece = game.dragPiece
 
         # Game loop here. Big boy motherfucka
         while True:
-            game.drawChessBoard(screen)
-            game.showLastMove(screen)
-            game.showMoves(screen)
+            chessboard_surface = pygame.Surface((800, 800))
+            game.drawChessBoard(chessboard_surface)
+            game.showLastMove(chessboard_surface)
+            game.showMoves(chessboard_surface)
             if dragPiece.isDragging:
-                game.showHoveredSquare(screen)
-            game.drawPieces(screen)
+                game.showHoveredSquare(chessboard_surface)
+            game.drawPieces(chessboard_surface)
 
             # Draw piece on top of other stuff when dragging, to avoid clipping
             if dragPiece.isDragging:
-                dragPiece.updateBlit(screen)
+                dragPiece.updateBlit(chessboard_surface)
+
+            # Draw the chessboard surface onto the GameBoarder surface
+            self.gameBoarder.draw_chessboard(chessboard_surface)
+            self.screen.blit(self.gameBoarder.get_surface(), (0, 0))
 
             for event in pygame.event.get():
 
@@ -47,18 +54,19 @@ class Main:
                     clickedRow = dragPiece.mouseY // squareSize
                     clickedCol = dragPiece.mouseX // squareSize
 
-                    if board.squares[clickedRow][clickedCol].hasPiece():
-                        piece = board.squares[clickedRow][clickedCol].piece
+                    if BoardSquare.isOnBoard(clickedRow, clickedCol):
+                        if board.squares[clickedRow][clickedCol].hasPiece():
+                            piece = board.squares[clickedRow][clickedCol].piece
 
-                        #Check if color of piece matches the player turn
-                        if piece.color == game.currentPlayer:
-                            board.possibleMoves(piece, clickedRow, clickedCol)
-                            dragPiece.saveInitialPos(event.pos)
-                            dragPiece.startDraggingPiece(piece)
+                            #Check if color of piece matches the player turn
+                            if piece.color == game.currentPlayer:
+                                board.possibleMoves(piece, clickedRow, clickedCol)
+                                dragPiece.saveInitialPos(event.pos)
+                                dragPiece.startDraggingPiece(piece)
 
-                            game.drawChessBoard(screen)
-                            game.showMoves(screen)
-                            game.drawPieces(screen) 
+                                game.drawChessBoard(chessboard_surface)
+                                game.showMoves(chessboard_surface)
+                                game.drawPieces(chessboard_surface)
 
                         # dragPiece.updateBlit(screen)
 
@@ -69,12 +77,12 @@ class Main:
 
                     if dragPiece.isDragging:
                         dragPiece.updateMouse(event.pos)
-                        game.drawChessBoard(screen)
-                        game.showLastMove(screen)
-                        game.showMoves(screen)
-                        game.drawPieces(screen)
-                        game.showHoveredSquare(screen)
-                        dragPiece.updateBlit(screen)
+                        game.drawChessBoard(chessboard_surface)
+                        game.showLastMove(chessboard_surface)
+                        game.showMoves(chessboard_surface)
+                        game.drawPieces(chessboard_surface)
+                        game.showHoveredSquare(chessboard_surface)
+                        dragPiece.updateBlit(chessboard_surface)
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     
@@ -83,9 +91,10 @@ class Main:
                         chosenRow = dragPiece.mouseY // squareSize
                         chosenCol = dragPiece.mouseX // squareSize
 
-                        startSquare = board.squares[dragPiece.initialRow][dragPiece.initialCol]
+
 
                         if BoardSquare.isOnBoard(chosenRow, chosenCol):
+                            startSquare = board.squares[dragPiece.initialRow][dragPiece.initialCol]
                             endSquare = board.squares[chosenRow][chosenCol]
                             move = Move(startSquare, endSquare)
 
@@ -94,9 +103,9 @@ class Main:
 
                             #After making the move, draw the pieces
                                 game.nextTurn()
-                            game.drawChessBoard(screen)
-                            game.showLastMove(screen)
-                            game.drawPieces(screen)
+                            game.drawChessBoard(chessboard_surface)
+                            game.showLastMove(chessboard_surface)
+                            game.drawPieces(chessboard_surface)
 
                         dragPiece.piece.clearMoves()
                     
