@@ -1,10 +1,4 @@
-import pygame
-import os
-
 from GlobalConstants import *
-from BoardSquare import BoardSquare
-from Move import Move
-
 
 class Piece:
     def __init__(self, name, color, value: float, image=None, texture_rect=None):
@@ -14,16 +8,14 @@ class Piece:
         self.value = value_sign * value
         self.moves = []
         self.moved = False
-        self.set_image()
+        self.imageKey = f"{color}{name}"
         self.texture_rect = texture_rect
 
-    def set_image(self):
-        imageString = os.path.join(
-            f'assets/Images/Pieces/{self.color}{self.name}PNG.png'
-        )
-        image = pygame.image.load(imageString)
-
-        self.image = pygame.transform.smoothscale(image, (squareSize, squareSize))
+    def draw(self, screen, col, row):
+        image = Images[self.imageKey]
+        imageCenter = col * squareSize + squareSize // 2, row * squareSize + squareSize // 2
+        self.texture_rect = image.get_rect(center=imageCenter)
+        screen.blit(image, self.texture_rect)
     
     def addMove(self, moves):
         self.moves.append(moves)
@@ -35,8 +27,8 @@ class Pawn(Piece):
 
     def __init__(self, color: str):
         self.direction = -1 if color == 'White' else 1
-
-    #TODO potential optimization here. Float could be replaced with int, potentially making MinMax faster
+        self.enPassant = False
+        #TODO potential optimization here. Float could be replaced with int, potentially making MinMax faster
         super().__init__(name='Pawn', color=color, value=1.0)
 
 

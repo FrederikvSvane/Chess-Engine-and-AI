@@ -52,7 +52,7 @@ class Main:
 
                         #Check if color of piece matches the player turn
                         if piece.color == game.currentPlayer:
-                            board.possibleMoves(piece, clickedRow, clickedCol)
+                            board.possibleMoves(piece, clickedRow, clickedCol, normalCall=True)
                             dragPiece.saveInitialPos(event.pos)
                             dragPiece.startDraggingPiece(piece)
 
@@ -91,6 +91,8 @@ class Main:
 
                             if board.validMove(dragPiece.piece, move):
                                 board.movePiece(dragPiece.piece, move)
+
+                                board.setEnPassantTrue(dragPiece.piece) #TODO det her virker ikke helt. Man kan en passant i begge retninger på samme tid
 
                             #After making the move, draw the pieces
                                 game.nextTurn()

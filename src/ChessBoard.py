@@ -2,6 +2,7 @@ from GlobalConstants import *
 from BoardSquare import BoardSquare
 from Pieces import *
 from Move import Move
+import copy
 
 
 class ChessBoard:
@@ -12,8 +13,8 @@ class ChessBoard:
         self.lastMove = None
 
         self._create()
-        self._add_pieces('White')
-        self._add_pieces('Black')
+        self._addPieces('White')
+        self._addPieces('Black')
 
     def _create(self):
         # This actually fills the 2D array with BoardSquare objects
@@ -21,7 +22,7 @@ class ChessBoard:
             for col in range(boardSize):
                 self.squares[row][col] = BoardSquare(row, col)
 
-    def _add_pieces(self, color):
+    def _addPieces(self, color):
         # This adds the piece objects to the BoardSquare objects, drawing all pieces onto the board
         row_pawn, row_other = (6, 7) if color == 'White' else (1, 0)
 
@@ -58,99 +59,109 @@ class ChessBoard:
         # self.squares[3][5] = BoardSquare(4, 3, Rook('Black'))
         # self.squares[5][3] = BoardSquare(3, 3, King('White'))  
 
-    def movePiece(self, piece, move):
-        start = move.start
-        end = move.end
+    def movePiece(self, piece, move, playSound=True):
+        startSquare = move.startSquare
+        targetSquare = move.targetSquare
+
+        enPassantEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
 
         # Updates the backend board
-        captured_piece = self.squares[end.row][end.col].piece
-        self.squares[start.row][start.col].piece = None
-        self.squares[end.row][end.col].piece = piece
+        captured_piece = self.squares[targetSquare.row][targetSquare.col].piece
+        self.squares[startSquare.row][startSquare.col].piece = None
+        self.squares[targetSquare.row][targetSquare.col].piece = piece
 
-        # Pawn promotion
         if isinstance(piece, Pawn):
-            self.checkPromotion(piece, end)
+            # En passant capture
+            #TODO den her spiller ikke den rigtige capture sound. Skal fikses
+            diff = targetSquare.col - startSquare.col
+            if diff != 0 and enPassantEmpty:
+                self.squares[startSquare.row][startSquare.col + diff].piece = None
+                self.squares[targetSquare.row][targetSquare.col].piece = piece
+            # Pawn promotion (happens inside an else here, beucase en passant and promotion can not happen at the same time)
+            else:    
+                self.checkPromotion(piece, targetSquare)
 
         # Castling
         if isinstance(piece, King):
-            if self.castling(start, end):
-                diff = end.col - start.col
-                rook = piece.leftRook if diff < 0 else piece.rightRook 
-                self.movePiece(rook, rook.moves[-1])
+            if self.castling(startSquare, targetSquare):
+                diff = targetSquare.col - startSquare.col
+                rook = piece.leftRook if diff < 0 else piece.rightRook
+                if rook.moves:
+                    self.movePiece(rook, rook.moves[-1], playSound=False)
+                else:
+                    pass # The rook has no moves that dont result in a check, so we can't castle
 
         # Register move and clear moves
         piece.moved = True
         piece.clearMoves()
 
+
+        # TODO nu kan vi rokere og promote, så den her logik skal lige omtænkes. Den rigtige lyd må kunne blive indlæst og afspillet på en smart måde
+        if playSound:
         #Load correct sound
-        if captured_piece is not None:
-            sound_file = "assets/Sounds/CaptureMove.wav"
-            #sound_file = "assets/Sounds/CheckBoomSound.wav"
-        else:
-            sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
+        #TODO lav en global Sound class med et felt for soundfile, sådan at den kan sættes og overskrives rundt omkring i forskellige metoder
+        #Og afspil den så inde i main loopet
+            if captured_piece is not None:
+                sound_file = "assets/Sounds/CaptureMove.wav"
+                #sound_file = "assets/Sounds/CheckBoomSound.wav"
+            else:
+                sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
 
-        # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
+            # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
 
-        # elif isinstance(move, CastleMove):
-        #     sound_file = "assets/Sounds/Castle.wav"
+            # elif isinstance(move, CastleMove):
+            #     sound_file = "assets/Sounds/Castle.wav"
 
-        # elif isinstance(piece, Pawn) and (end.row == 0 or end.row == 7):
-        #     sound_file = "assets/Sounds/Promotion.wav"
+            # elif isinstance(piece, Pawn) and (targetSquare.row == 0 or targetSquare.row == 7):
+            #     sound_file = "assets/Sounds/Promotion.wav"
 
-        # elif self.isCheck():
-        #     sound_file = "assets/Sounds/Check.wav"
-        #     sound_file = "assets/Sounds/CheckBoomSound.wav" :) :) :)
+            # elif self.isCheck():
+            #     sound_file = "assets/Sounds/Check.wav"
+            #     sound_file = "assets/Sounds/CheckBoomSound.wav" :) :) :)
 
-        # elif self.isCheckmate():
-        #     sound_file = "assets/Sounds/Checkmate.wav"
+            # elif self.isCheckmate():
+            #     sound_file = "assets/Sounds/Checkmate.wav"
 
-        #TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
-        #måske hotel room service af pitbull
+            #TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
+            #måske hotel room service af pitbull
 
-        
+            # Play sound
+            pygame.mixer.music.load(sound_file)
+            pygame.mixer.music.play()
 
-        
+            # Update last move for rendering
+            self.lastMove = move
 
-
-        # Play sound
-        pygame.mixer.music.load(sound_file)
-        pygame.mixer.music.play()
-
-        # Update last move for rendering
-        self.lastMove = move
-
-    def checkPromotion(self, piece, end):
-        if (end.row == 0 or end.row == 7):
+    def checkPromotion(self, piece, targetSquare):
+        if (targetSquare.row == 0 or targetSquare.row == 7):
             # TODO add a popup window for choosing a piece to promote to
-            self.squares[end.row][end.col].piece = Queen(piece.color)
-
+            self.squares[targetSquare.row][targetSquare.col].piece = Queen(piece.color)
 
     def validMove(self, piece, move):
         return move in piece.moves
 
     #TODO selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
-    def possibleMoves(self, piece, row, col):
+    def possibleMoves(self, piece, row, col, normalCall=True): #The normalCall is used to prevent infinite recursion inside isInCheck
         # Calculates possible moves for a piece on a given square
 
-        # Nested methods for calculating possible moves for each piece:
         def pawnMoves(piece, row, col):
-            # TODO en passant
-            # TODO promotion
-            # TODO promotion capture
-
             steps = 1 if piece.moved else 2
             
             # Move forward
-            start = row + piece.direction
-            end = row + (piece.direction * (1 + steps))
-            for possibleMoveRow in range(start, end, piece.direction):
+            startSquare = row + piece.direction
+            targetSquare = row + (piece.direction * (1 + steps))
+            for possibleMoveRow in range(startSquare, targetSquare, piece.direction):
                 if BoardSquare.isOnBoard(possibleMoveRow):
                     if self.squares[possibleMoveRow][col].isEmpty():
-                        firstSquare = BoardSquare(row, col)
-                        finalSquare = BoardSquare(possibleMoveRow, col)
+                        startSquare = BoardSquare(row, col)
+                        targetSquare = BoardSquare(possibleMoveRow, col)
+                        move = Move(startSquare, targetSquare)
 
-                        move = Move(firstSquare, finalSquare)
-                        piece.addMove(move)
+                        if normalCall:
+                            if not self.isInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
                         # If the square is not empty, the path is blocked, so we break
                     else:
                         break
@@ -164,11 +175,49 @@ class ChessBoard:
             for possibleMoveCol in possibleMoveCols:
                 if BoardSquare.isOnBoard(possibleMoveRow, possibleMoveCol):
                     if self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
-                        firstSquare = BoardSquare(row, col)
-                        finalSquare = BoardSquare(possibleMoveRow, possibleMoveCol)
+                        startSquare = BoardSquare(row, col)
+                        targetPiece = self.squares[possibleMoveRow][possibleMoveCol].piece
+                        targetSquare = BoardSquare(possibleMoveRow, possibleMoveCol, targetPiece)
+                        move = Move(startSquare, targetSquare)
 
-                        move = Move(firstSquare, finalSquare)
-                        piece.addMove(move)
+                        if normalCall:
+                            if not self.isInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
+
+            # En passant
+            startRow = 3 if piece.color == 'White' else 4
+            targetRow = 2 if piece.color == 'White' else 5
+            # Left en passant
+            if BoardSquare.isOnBoard(col-1) and row == startRow:
+                if self.squares[row][col-1].hasEnemyPiece(piece.color):
+                    enemyPiece = self.squares[row][col-1].piece
+                    if isinstance(enemyPiece, Pawn):
+                        startSquare = BoardSquare(row, col)
+                        targetSquare = BoardSquare(targetRow, col-1, enemyPiece)
+                        move = Move(startSquare, targetSquare)
+
+                        if normalCall:
+                            if not self.isInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
+
+            # Right en passant
+            if BoardSquare.isOnBoard(col+1) and row == startRow:
+                if self.squares[row][col+1].hasEnemyPiece(piece.color):
+                    enemyPiece = self.squares[row][col+1].piece
+                    if isinstance(enemyPiece, Pawn):
+                        startSquare = BoardSquare(row, col)
+                        targetSquare = BoardSquare(targetRow, col+1, enemyPiece)
+                        move = Move(startSquare, targetSquare)
+
+                        if normalCall:
+                            if not self.isInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
             
 
         def knightMoves(piece, row, col):
@@ -184,13 +233,20 @@ class ChessBoard:
                 (row + 1, col + 2),
             ]
             for move in possibleMoves:
-                newRow, newCol = move
-                if BoardSquare.isOnBoard(newRow, newCol):
-                    if self.squares[newRow][newCol].isEmptyOrEnemy(piece.color):
-                        start = BoardSquare(row, col)
-                        end = BoardSquare(newRow, newCol)
-                        move = Move(start, end)
-                        piece.addMove(move)
+                possibleMoveRow, possibleMoveCol = move
+                if BoardSquare.isOnBoard(possibleMoveRow, possibleMoveCol):
+                    if self.squares[possibleMoveRow][possibleMoveCol].isEmptyOrEnemy(piece.color):
+                        startSquare = BoardSquare(row, col)
+                        targetPiece = self.squares[possibleMoveRow][possibleMoveCol].piece
+                        targetSquare = BoardSquare(possibleMoveRow, possibleMoveCol, targetPiece)
+
+                        move = Move(startSquare, targetSquare)
+
+                        if normalCall:
+                            if not self.isInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
 
                         if piece.color == 'White' and row == 7 and col == 6:
                             secretMove = Move(BoardSquare(row, col), BoardSquare(0,3))
@@ -205,20 +261,28 @@ class ChessBoard:
                 while True:
                     if BoardSquare.isOnBoard(possibleMoveRow, possibleMoveCol):
                         
-                        firstSquare = BoardSquare(row, col)
-                        finalSquare = BoardSquare(possibleMoveRow, possibleMoveCol)
+                        startSquare = BoardSquare(row, col)
+                        targetPiece = self.squares[possibleMoveRow][possibleMoveCol].piece
+                        targetSquare = BoardSquare(possibleMoveRow, possibleMoveCol, targetPiece)
 
-                        move = Move(firstSquare, finalSquare)
+                        move = Move(startSquare, targetSquare)
                         
                         if self.squares[possibleMoveRow][possibleMoveCol].isEmpty():
-                            piece.addMove(move)
+                            if normalCall:
+                                if not self.isInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
+                                piece.addMove(move)
 
-                        if self.squares[possibleMoveRow][possibleMoveCol].hasFriendlyPiece(piece.color):
+                        elif self.squares[possibleMoveRow][possibleMoveCol].hasFriendlyPiece(piece.color):
                             break
 
-                            
-                        if self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
-                            piece.addMove(move)
+                        elif self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
+                            if normalCall:
+                                if not self.isInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
+                                piece.addMove(move)
                             break
                     
                     else:
@@ -267,15 +331,19 @@ class ChessBoard:
                 (row - 1, col - 1), # Up left
             ]
 
-            #TODO det her er dårlig logik. Kongen skal ikke kunne stille sig selv i skak
             for move in adj:
                 newRow, newCol = move
                 if BoardSquare.isOnBoard(newRow, newCol):
                     if self.squares[newRow][newCol].isEmptyOrEnemy(piece.color):
-                        start = BoardSquare(row, col)
-                        end = BoardSquare(newRow, newCol)
-                        move = Move(start, end)
-                        piece.addMove(move)
+                        startSquare = BoardSquare(row, col)
+                        targetSquare = BoardSquare(newRow, newCol)
+                        move = Move(startSquare, targetSquare)
+                        
+                        if normalCall:
+                            if not self.isInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            break # Skal der breakes her? Er det en bug? I am not sure. TODO spørg chat
             
             #Castling
             if not piece.moved:
@@ -289,16 +357,23 @@ class ChessBoard:
                             piece.leftRook = leftRook
 
                             #Rook move
-                            start = BoardSquare(row, 0)
-                            end = BoardSquare(row, 3)
-                            move = Move(start, end)
-                            leftRook.addMove(move)
+                            startSquare = BoardSquare(row, 0)
+                            targetSquare = BoardSquare(row, 3)
+                            rookMove = Move(startSquare, targetSquare)
+                            leftRook.addMove(rookMove)
 
                             #King move
-                            start = BoardSquare(row, col)
-                            end = BoardSquare(row, 2)   
-                            move = Move(start, end)
-                            piece.addMove(move)                            
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(row, 2)   
+                            kingMove = Move(startSquare, targetSquare) 
+
+                            if normalCall:
+                                if not self.isInCheck(piece, kingMove) and not self.isInCheck(leftRook, rookMove):
+                                    leftRook.addMove(rookMove)
+                                    piece.addMove(kingMove)
+                            else:
+                                leftRook.addMove(rookMove)
+                                piece.addMove(kingMove)                
 
                 #King side
                 rightRook = self.squares[row][7].piece
@@ -310,19 +385,22 @@ class ChessBoard:
                             piece.rightRook = rightRook
 
                             #Rook move
-                            start = BoardSquare(row, 7)
-                            end = BoardSquare(row, 5)
-                            move = Move(start, end)
-                            rightRook.addMove(move)
+                            startSquare = BoardSquare(row, 7)
+                            targetSquare = BoardSquare(row, 5)
+                            rookMove = Move(startSquare, targetSquare)
 
                             #King move
-                            start = BoardSquare(row, col)
-                            end = BoardSquare(row, 6)   
-                            move = Move(start, end)
-                            piece.addMove(move)         
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(row, 6)   
+                            kingMove = Move(startSquare, targetSquare)
 
-
-
+                            if normalCall:
+                                if not self.isInCheck(piece, kingMove) and not self.isInCheck(rightRook, rookMove):
+                                    rightRook.addMove(rookMove)
+                                    piece.addMove(kingMove)
+                            else:
+                                rightRook.addMove(rookMove)
+                                piece.addMove(kingMove)
 
         # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
         if piece.name == 'Pawn': pawnMoves(piece, row, col)
@@ -332,6 +410,29 @@ class ChessBoard:
         elif piece.name == 'Queen': queenMoves()
         elif piece.name == 'King': kingMoves()
 
+    def castling(self, startSquare, targetSquare): 
+        return abs(startSquare.col - targetSquare.col) == 2
+    
+    def setEnPassantTrue(self, piece):
+        if not isinstance(piece, Pawn):
+            return
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if isinstance(self.squares[row][col].piece, Pawn):
+                    self.squares[row][col].piece.enPassant = False
+        piece.enPassant = True
 
-    def castling(self, start, end):
-        return abs(start.col - end.col) == 2
+    def isInCheck(self, piece, move): #Lækker copy logik her som kan bruges til AI!! TODO AI, optimization
+        tempPiece = copy.deepcopy(piece)
+        tempBoard = copy.deepcopy(self)
+        tempBoard.movePiece(tempPiece, move, playSound=False)
+
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if tempBoard.squares[row][col].hasEnemyPiece(piece.color):
+                    enemyPiece = tempBoard.squares[row][col].piece
+                    tempBoard.possibleMoves(enemyPiece, row, col, normalCall=False) #NormalCall is set to false to prevent infinite recursion
+                    for move in enemyPiece.moves:
+                        if isinstance(move.targetSquare.piece, King):
+                            return True
+        return False
