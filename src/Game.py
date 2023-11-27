@@ -26,6 +26,20 @@ class Game:
 
                 pygame.draw.rect(surface, color, square)
 
+
+                #TODO this code works, but it makes the game lag alot. Maybe find a better way to do this
+                #Show coordinates on the board
+                # if col == 0:
+                #     color = pygame.Color("burlywood1") if row % 2 != 0 else pygame.Color("sienna4")
+                #     font = pygame.font.SysFont('monospace', 18, bold=True)
+                #     label = font.render(str(abs(row-8)), True, color)
+                #     surface.blit(label, (0, row * squareSize))
+                # if row == 7:
+                #     color = pygame.Color("burlywood1") if col % 2 == 0 else pygame.Color("sienna4")
+                #     font = pygame.font.SysFont('monospace', 18, bold=True)
+                #     label = font.render(BoardSquare.getColumnLetter((col)), True, color)
+                #     surface.blit(label, (col * squareSize + squareSize - 14, windowHeight - 18))
+
     def drawPieces(self, surface):
         for row in range(boardSize):
             for col in range(boardSize):
@@ -64,7 +78,6 @@ class Game:
                     pygame.draw.circle(temp_surface, capture_circle, (squareSize // 2, squareSize // 2), capture_radius, width=8)
                     surface.blit(temp_surface, (move.end.col * squareSize, move.end.row * squareSize))
 
-
     def showHoveredSquare(self, surface):
         if self.hoveredSquare:
             color = (180, 180, 180)
@@ -87,6 +100,8 @@ class Game:
                 square = (pos.col * squareSize, pos.row * squareSize, squareSize, squareSize)
                 pygame.draw.rect(surface, color, square)
 
-
     def nextTurn(self):
         self.currentPlayer = 'White' if self.currentPlayer == 'Black' else 'Black'
+
+    def resetGame(self):
+        self.__init__()

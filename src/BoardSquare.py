@@ -32,5 +32,11 @@ class BoardSquare:
             if arg < 0 or arg >= boardSize:
                 return False
         return True
+    
+    @staticmethod
+    def getColumnLetter(col):
+        return letters[col + 1]
+    
+
 
 
