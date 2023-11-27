@@ -26,13 +26,14 @@ class Main:
         game = self.game
         board = game.board
         dragPiece = self.game.dragPiece
-
+        
         while True:
             chessboard_surface = pygame.Surface((chessBoardWidth, chessBoardHeight))
+            self.gameBoarder.draw_player_info("Player 1", "Player 2", chessboard_surface)
             game.drawChessBoard(chessboard_surface)
             game.showLastMove(chessboard_surface)
             game.showMoves(chessboard_surface)
-            self.gameBoarder.draw_player_info("Player 1", "Player 2", chessboard_surface)
+        
             if dragPiece.isDragging:
                 game.showHoveredSquare(chessboard_surface)
             game.drawPieces(chessboard_surface)
@@ -51,7 +52,6 @@ class Main:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     dragPiece.updateMouse(event_pos_with_offset)
                     clickedRow, clickedCol = dragPiece.mouseY // squareSize, dragPiece.mouseX // squareSize
-
                     if board.squares[clickedRow][clickedCol].hasPiece():
                         piece = board.squares[clickedRow][clickedCol].piece
                         if piece.color == game.currentPlayer:
