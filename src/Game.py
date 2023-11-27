@@ -8,11 +8,16 @@ from BoardSquare import BoardSquare
 
 class Game:
 
-    def __init__(self) -> None:
+    def __init__(self, config) -> None:
         self.board = ChessBoard()
         self.dragPiece = DragPiece()
         self.currentPlayer = 'White'
         self.hoveredSquare = None
+        self.player1_time = config.start_time
+        self.player2_time = config.start_time
+        self.player1_name = config.player1_name
+        self.player2_name = config.player2_name
+        self.timerUpdate = pygame.time.get_ticks()
 
     def drawChessBoard(self, surface) -> None:
         for row in range(boardSize):
@@ -103,5 +108,16 @@ class Game:
     def nextTurn(self):
         self.currentPlayer = 'White' if self.currentPlayer == 'Black' else 'Black'
 
-    def resetGame(self):
-        self.__init__()
+    def resetGame(self,config):
+        self.__init__(config)
+
+    def update_timer(self):
+        if GlobalConstants.gameStarted:
+            current_time = pygame.time.get_ticks()
+            if self.currentPlayer == 'Black' and current_time - self.timerUpdate >= 1000:
+                self.player1_time -= 1
+                self.timerUpdate = current_time
+            elif self.currentPlayer == 'White' and current_time - self.timerUpdate >= 1000:
+                self.player2_time -= 1
+                self.timerUpdate = current_time
+

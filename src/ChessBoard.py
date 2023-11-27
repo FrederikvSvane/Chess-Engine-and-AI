@@ -2,6 +2,8 @@ from GlobalConstants import *
 from BoardSquare import BoardSquare
 from Pieces import *
 from Move import Move
+from Game import *
+from GlobalConstants import GlobalConstants
 
 
 class ChessBoard:
@@ -10,7 +12,7 @@ class ChessBoard:
         # This just creates the 2D array
         self.squares = [[0, 0, 0, 0, 0, 0, 0, 0] for col in range(boardSize)]
         self.lastMove = None
-
+        self.isFirstMoveOver = False
         self._create()
         self._add_pieces('White')
         self._add_pieces('Black')
@@ -47,8 +49,6 @@ class ChessBoard:
         # king
         self.squares[row_other][4] = BoardSquare(row_other, 4, King(color))
 
-
-
         # !!!TESTING!!!
         # self.squares[3][1] = BoardSquare(5, 0, Pawn(color))
         # self.squares[4][2] = BoardSquare(5, 0, Pawn(color))
@@ -59,6 +59,10 @@ class ChessBoard:
         # self.squares[5][3] = BoardSquare(3, 3, King('White'))  
 
     def movePiece(self, piece, move):
+        if self.isFirstMoveOver is False:
+            GlobalConstants.gameStarted = True
+            self.isFirstMoveOver = True
+
         start = move.start
         end = move.end
 
@@ -75,19 +79,19 @@ class ChessBoard:
         if isinstance(piece, King):
             if self.castling(start, end):
                 diff = end.col - start.col
-                rook = piece.leftRook if diff < 0 else piece.rightRook 
+                rook = piece.leftRook if diff < 0 else piece.rightRook
                 self.movePiece(rook, rook.moves[-1])
 
         # Register move and clear moves
         piece.moved = True
         piece.clearMoves()
 
-        #Load correct sound
+        # Load correct sound
         if captured_piece is not None:
             sound_file = "assets/Sounds/CaptureMove.wav"
-            #sound_file = "assets/Sounds/CheckBoomSound.wav"
+            # sound_file = "assets/Sounds/CheckBoomSound.wav"
         else:
-            sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
+            sound_file = "assets/Sounds/NormalMove.wav"  # TODO den her skal stå nederst, når de andre er lavet
 
         # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
 
@@ -104,13 +108,8 @@ class ChessBoard:
         # elif self.isCheckmate():
         #     sound_file = "assets/Sounds/Checkmate.wav"
 
-        #TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
-        #måske hotel room service af pitbull
-
-        
-
-        
-
+        # TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
+        # måske hotel room service af pitbull
 
         # Play sound
         pygame.mixer.music.load(sound_file)
@@ -124,11 +123,10 @@ class ChessBoard:
             # TODO add a popup window for choosing a piece to promote to
             self.squares[end.row][end.col].piece = Queen(piece.color)
 
-
     def validMove(self, piece, move):
         return move in piece.moves
 
-    #TODO selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
+    # TODO selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
     def possibleMoves(self, piece, row, col):
         # Calculates possible moves for a piece on a given square
 
@@ -139,7 +137,7 @@ class ChessBoard:
             # TODO promotion capture
 
             steps = 1 if piece.moved else 2
-            
+
             # Move forward
             start = row + piece.direction
             end = row + (piece.direction * (1 + steps))
@@ -157,7 +155,7 @@ class ChessBoard:
                     # And if the square is not on the board, we break
                 else:
                     break
-            
+
             # Move diagonally / capture
             possibleMoveRow = row + piece.direction
             possibleMoveCols = [col - 1, col + 1]
@@ -169,7 +167,6 @@ class ChessBoard:
 
                         move = Move(firstSquare, finalSquare)
                         piece.addMove(move)
-            
 
         def knightMoves(piece, row, col):
             # L shapes babyyy how the horse moves
@@ -193,9 +190,9 @@ class ChessBoard:
                         piece.addMove(move)
 
                         if piece.color == 'White' and row == 7 and col == 6:
-                            secretMove = Move(BoardSquare(row, col), BoardSquare(0,3))
+                            secretMove = Move(BoardSquare(row, col), BoardSquare(0, 3))
                             piece.addMove(secretMove)
-        
+
         def slidingPieceMoves(directions):
             for step in directions:
                 rowStep, colStep = step
@@ -204,70 +201,69 @@ class ChessBoard:
 
                 while True:
                     if BoardSquare.isOnBoard(possibleMoveRow, possibleMoveCol):
-                        
+
                         firstSquare = BoardSquare(row, col)
                         finalSquare = BoardSquare(possibleMoveRow, possibleMoveCol)
 
                         move = Move(firstSquare, finalSquare)
-                        
+
                         if self.squares[possibleMoveRow][possibleMoveCol].isEmpty():
                             piece.addMove(move)
 
                         if self.squares[possibleMoveRow][possibleMoveCol].hasFriendlyPiece(piece.color):
                             break
 
-                            
                         if self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
                             piece.addMove(move)
                             break
-                    
+
                     else:
                         break
-                        
+
                     possibleMoveRow = possibleMoveRow + rowStep
-                    possibleMoveCol = possibleMoveCol + colStep                   
+                    possibleMoveCol = possibleMoveCol + colStep
 
         def bishopMoves():
             slidingPieceMoves([
-                (-1, -1), # Up left
-                (-1, 1), # Up right
-                (1, 1), # Down right
-                (1, -1) # Down left
+                (-1, -1),  # Up left
+                (-1, 1),  # Up right
+                (1, 1),  # Down right
+                (1, -1)  # Down left
             ])
 
         def rookMoves():
             slidingPieceMoves([
-                (-1, 0), # Up
-                (1, 0), # Down
-                (0, 1), # Right
-                (0, -1) # Left
+                (-1, 0),  # Up
+                (1, 0),  # Down
+                (0, 1),  # Right
+                (0, -1)  # Left
             ])
 
         def queenMoves():
             slidingPieceMoves([
-                (-1, -1), # Up left
-                (-1, 0), # Up
-                (-1, 1), # Up right
-                (0, 1), # Right
-                (1, 1), # Down right
-                (1, 0), # Down
-                (1, -1), # Down left
-                (0, -1) # Left
+                (-1, -1),  # Up left
+                (-1, 0),  # Up
+                (-1, 1),  # Up right
+                (0, 1),  # Right
+                (1, 1),  # Down right
+                (1, 0),  # Down
+                (1, -1),  # Down left
+                (0, -1)  # Left
             ])
 
         def kingMoves():
             adj = [
-                (row - 1, col + 0), # Up
-                (row - 1, col + 1), # Up right
-                (row + 0, col + 1), # Right
-                (row + 1, col + 1), # Down right
-                (row + 1, col + 0), # Down
-                (row + 1, col - 1), # Down left
-                (row + 0, col - 1), # Left
-                (row - 1, col - 1), # Up left
+                (row - 1, col + 0),  # Up
+                (row - 1, col + 1),  # Up right
+                (row + 0, col + 1),  # Right
+                (row + 1, col + 1),  # Down right
+                (row + 1, col + 0),  # Down
+                (row + 1, col - 1),  # Down left
+                (row + 0, col - 1),  # Left
+                (row - 1, col - 1),  # Up left
             ]
 
-            #TODO det her er dårlig logik. Kongen skal ikke kunne stille sig selv i skak
+            # TODO det her er dårlig logik. Kongen skal ikke kunne stille sig selv i skak
             for move in adj:
                 newRow, newCol = move
                 if BoardSquare.isOnBoard(newRow, newCol):
@@ -276,62 +272,65 @@ class ChessBoard:
                         end = BoardSquare(newRow, newCol)
                         move = Move(start, end)
                         piece.addMove(move)
-            
-            #Castling
+
+            # Castling
             if not piece.moved:
-                #Queen side
+                # Queen side
                 leftRook = self.squares[row][0].piece
                 if isinstance(leftRook, Rook) and not leftRook.moved:
                     for c in range(1, 4):
                         if self.squares[row][c].hasPiece():
-                            break #If there is a piece in the way, we can't castle
+                            break  # If there is a piece in the way, we can't castle
                         if c == 3:
                             piece.leftRook = leftRook
 
-                            #Rook move
+                            # Rook move
                             start = BoardSquare(row, 0)
                             end = BoardSquare(row, 3)
                             move = Move(start, end)
                             leftRook.addMove(move)
 
-                            #King move
+                            # King move
                             start = BoardSquare(row, col)
-                            end = BoardSquare(row, 2)   
+                            end = BoardSquare(row, 2)
                             move = Move(start, end)
-                            piece.addMove(move)                            
+                            piece.addMove(move)
 
-                #King side
+                            # King side
                 rightRook = self.squares[row][7].piece
                 if isinstance(rightRook, Rook) and not rightRook.moved:
                     for c in range(5, 7):
                         if self.squares[row][c].hasPiece():
-                            break #If there is a piece in the way, we can't castle
+                            break  # If there is a piece in the way, we can't castle
                         if c == 6:
                             piece.rightRook = rightRook
 
-                            #Rook move
+                            # Rook move
                             start = BoardSquare(row, 7)
                             end = BoardSquare(row, 5)
                             move = Move(start, end)
                             rightRook.addMove(move)
 
-                            #King move
+                            # King move
                             start = BoardSquare(row, col)
-                            end = BoardSquare(row, 6)   
+                            end = BoardSquare(row, 6)
                             move = Move(start, end)
-                            piece.addMove(move)         
+                            piece.addMove(move)
 
+                            # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
 
-
-
-        # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
-        if piece.name == 'Pawn': pawnMoves(piece, row, col)
-        elif piece.name == 'Knight': knightMoves(piece, row, col)
-        elif piece.name == 'Bishop': bishopMoves()
-        elif piece.name == 'Rook': rookMoves()
-        elif piece.name == 'Queen': queenMoves()
-        elif piece.name == 'King': kingMoves()
-
+        if piece.name == 'Pawn':
+            pawnMoves(piece, row, col)
+        elif piece.name == 'Knight':
+            knightMoves(piece, row, col)
+        elif piece.name == 'Bishop':
+            bishopMoves()
+        elif piece.name == 'Rook':
+            rookMoves()
+        elif piece.name == 'Queen':
+            queenMoves()
+        elif piece.name == 'King':
+            kingMoves()
 
     def castling(self, start, end):
         return abs(start.col - end.col) == 2

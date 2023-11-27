@@ -6,13 +6,13 @@ class DragPiece:
     def __init__(self):
         self.piece = None
         self.isDragging = False
-        self.mouseX = 0 - boarderOffset
-        self.mouseY = 0 - boarderOffset
+        self.mouseX = 0
+        self.mouseY = 0
         self.initialRow = 0
         self.initialCol = 0
 
     def updateMouse(self, pos: tuple):
-        self.mouseX, self.mouseY = pos[0] - boarderOffset, pos[1] - boarderOffset
+        self.mouseX, self.mouseY = pos[0], pos[1]
 
     def saveInitialPos(self, pos):
         self.initialRow = pos[1] // squareSize
