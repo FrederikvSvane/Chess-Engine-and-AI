@@ -57,9 +57,10 @@ class GameBoarder:
         self.surface.blit(player1_text, (text_x, player1_text_y))
         self.surface.blit(player2_text, (text_x, player2_text_y))
 
-    def draw_score_bar(self, chessboard_surface):
+    def draw_score_bar(self, chessboard_surface, game):
         # Define the color and dimensions of the bar
-        score_bar_color = (255, 255, 255)  # White color for the bar
+        score_bar_color_white = (0, 0, 0)  # White color for the white part of the bar
+        score_bar_color_black = (255, 255, 255)  # Black color for the black part of the bar
         score_bar_width = 10  # The width of the bar
         score_bar_height = chessboard_surface.get_height()  # The height of the bar
 
@@ -70,8 +71,32 @@ class GameBoarder:
         score_bar_x = chessboard_x - score_bar_width - 10
         score_bar_y = (self.surface.get_height() - chessboard_surface.get_height()) // 2
 
-        # Draw the bar
-        pygame.draw.rect(self.surface, score_bar_color, (score_bar_x, score_bar_y, score_bar_width, score_bar_height))
+        # Calculate the material difference and the proportions of the score bar
+        material_difference = game.get_material_difference()
+        max_material_value = 78  # Maximum material value
+
+        # Ensure the material difference is within the maximum range
+        material_difference_scaled = max(-max_material_value, min(max_material_value, material_difference))
+
+        # Calculate the proportions of the white and black sections of the score bar
+        # Positive difference means more white, negative means more black
+        white_proportion = (max_material_value + material_difference_scaled) / (2 * max_material_value)
+        black_proportion = 1 - white_proportion
+
+        # Calculate the heights of each section of the score bar
+        white_section_height = int(score_bar_height * white_proportion)
+        black_section_height = int(score_bar_height * black_proportion)  # Explicit use of black_proportion
+
+        # Draw the white section of the score bar
+        pygame.draw.rect(self.surface, score_bar_color_white, (score_bar_x, score_bar_y, score_bar_width, black_section_height))
+
+        # Draw the black section of the score bar
+        pygame.draw.rect(self.surface, score_bar_color_black, (score_bar_x, score_bar_y + black_section_height, score_bar_width, white_section_height))
+
+
+
+
+
 
     def draw_and_update_timer(self, surface, player1_time, player2_time):
         # Font for the timer

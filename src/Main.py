@@ -49,7 +49,7 @@ class Main:
 
             # Draw the player names and images
             game.update_timer()
-            self.gameBoarder.draw_score_bar(chessboard_surface)
+            self.gameBoarder.draw_score_bar(chessboard_surface,board)
             self.gameBoarder.draw_player_info(self.game.player1_name, self.game.player2_name, chessboard_surface)
 
             # Logic for showing square that is hovered over
@@ -110,6 +110,7 @@ class Main:
                             move = Move(startSquare, endSquare)
                             if board.validMove(dragPiece.piece, move):
                                 board.movePiece(dragPiece.piece, move)
+                                self.gameBoarder.draw_score_bar(chessboard_surface,board)
                                 game.nextTurn()
 
                         dragPiece.piece.clearMoves()

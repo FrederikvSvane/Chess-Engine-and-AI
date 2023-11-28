@@ -13,6 +13,8 @@ class ChessBoard:
         self.squares = [[0, 0, 0, 0, 0, 0, 0, 0] for col in range(boardSize)]
         self.lastMove = None
         self.isFirstMoveOver = False
+        self.whiteMaterial = 0
+        self.blackMaterial = 0
         self._create()
         self._add_pieces('White')
         self._add_pieces('Black')
@@ -67,7 +69,17 @@ class ChessBoard:
         end = move.end
 
         # Updates the backend board
+        print(f"Before capture - White Material: {self.whiteMaterial}, Black Material: {self.blackMaterial}")
         captured_piece = self.squares[end.row][end.col].piece
+        if captured_piece is not None:
+            if captured_piece.color == "White":
+                print(f"Capturing white piece of value: {captured_piece.value}")
+                self.blackMaterial += captured_piece.value
+            else:
+                print(f"Capturing black piece of value: {captured_piece.value}")
+                self.whiteMaterial -= captured_piece.value
+        print(f"After capture - White Material: {self.whiteMaterial}, Black Material: {self.blackMaterial}")
+
         self.squares[start.row][start.col].piece = None
         self.squares[end.row][end.col].piece = piece
 
@@ -334,3 +346,6 @@ class ChessBoard:
 
     def castling(self, start, end):
         return abs(start.col - end.col) == 2
+
+    def get_material_difference(self):
+        return self.whiteMaterial - self.blackMaterial
