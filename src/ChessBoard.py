@@ -416,13 +416,12 @@ class ChessBoard:
         return abs(startSquare.col - targetSquare.col) == 2
     
     def setEnPassantTrue(self, piece):
-        if not isinstance(piece, Pawn):
-            return
         for row in range(boardSize):
             for col in range(boardSize):
                 if isinstance(self.squares[row][col].piece, Pawn):
                     self.squares[row][col].piece.enPassant = False
-        piece.enPassant = True
+        if isinstance(piece, Pawn):
+            piece.enPassant = True
 
     def isInCheck(self, piece, move): #Lækker copy logik her som kan bruges til AI!! TODO AI, optimization
         tempPiece = copy.deepcopy(piece)
@@ -438,3 +437,37 @@ class ChessBoard:
                         if isinstance(move.targetSquare.piece, King):
                             return True
         return False
+    
+    def isInCheckmate(self, kingColor):
+        #Find the king
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if isinstance(piece, King) and piece.color == kingColor:
+                    kingSquare = self.squares[row][col]
+                    king = piece
+                    break
+        #If the king is not in check, it is not in checkmate
+        move = Move(kingSquare, kingSquare)
+        if not self.isInCheck(king, move):
+            return False
+        #Check if any move can take the king out of check
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if piece is not None and piece.color == kingColor:
+                    possibleMoves = self.possibleMoves(piece, row, col, normalCall=False)
+                    if possibleMoves is None:
+                        continue
+                    for move in possibleMoves:
+                        tempBoard = copy.deepcopy(self)
+                        #This tries every single legal move of every single piece
+                        tempBoard.movePiece(piece, move, playSound=False)
+                        if not tempBoard.isInCheck(king, move):
+                            return False
+        #If no move can take the king out of check, it is checkmate
+        return True
+
+                    
+        
+
