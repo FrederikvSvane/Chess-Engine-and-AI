@@ -134,6 +134,10 @@ class ChessBoard:
         if (end.row == 0 or end.row == 7):
             # TODO add a popup window for choosing a piece to promote to
             self.squares[end.row][end.col].piece = Queen(piece.color)
+            if piece.color == 'White':
+                self.whiteMaterial += 10
+            else:
+                self.blackMaterial += 10
 
     def validMove(self, piece, move):
         return move in piece.moves

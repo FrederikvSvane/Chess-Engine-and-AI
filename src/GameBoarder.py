@@ -12,7 +12,7 @@ class GameBoarder:
         self.player1_image = pygame.image.load("assets/Images/black_icon.png")
         self.player2_image = pygame.image.load("assets/Images/white_icon.png")
         image_size = (40, 40)  # Width, Height (adjust as needed)# Fill with black or any color for the border
-        self.timer_font = pygame.font.SysFont("Arial", 20)
+        self.timer_font = pygame.font.SysFont("Gardenia Bold", 20)
 
         # Resize the images
         self.player1_image = pygame.transform.scale(self.player1_image, image_size)
@@ -30,8 +30,8 @@ class GameBoarder:
 
     def draw_player_info(self, player1, player2, chessboard_surface):
         # Render the text for player1 and player2 names
-        player1_text = self.font.render(f"{player1}", True, (255, 255, 255))
-        player2_text = self.font.render(f"{player2}", True, (255, 255, 255))
+        player1_text = self.font.render(f"{player1}", False, (255, 255, 255))
+        player2_text = self.font.render(f"{player2}", False, (255, 255, 255))
 
         # Calculate the y positions for the images
         player1_image_y = 10
@@ -73,7 +73,7 @@ class GameBoarder:
 
         # Calculate the material difference and the proportions of the score bar
         material_difference = game.get_material_difference()
-        max_material_value = 78  # Maximum material value
+        max_material_value = 36  # Maximum material value
 
         # Ensure the material difference is within the maximum range
         material_difference_scaled = max(-max_material_value, min(max_material_value, material_difference))
@@ -92,15 +92,46 @@ class GameBoarder:
 
         # Draw the black section of the score bar
         pygame.draw.rect(self.surface, score_bar_color_black, (score_bar_x, score_bar_y + black_section_height, score_bar_width, white_section_height))
+        font = pygame.font.SysFont(None, 20)
 
+        # Calculate the material advantage for each player
+        white_advantage = max(0, material_difference_scaled)
+        black_advantage = max(0, -material_difference_scaled)
 
+        # Render the material advantage text
+        white_text = f"+{black_advantage}" if black_advantage else ""
+        black_text = f"+{white_advantage}" if white_advantage else ""
 
+        # Create text surfaces
+        white_text_surface = font.render(black_text, True, (150, 150, 150))
+        black_text_surface = font.render(white_text, True, (150, 150, 150))
 
+        # Calculate text positions
+        white_text_x = score_bar_x + ((score_bar_width - white_text_surface.get_width()) // 2)-15
+        black_text_x = score_bar_x + ((score_bar_width - black_text_surface.get_width()) // 2)-15
+        white_text_y = score_bar_y - white_text_surface.get_height() - 5  # 5 pixels above the score bar
+        black_text_y = score_bar_y + score_bar_height + 5  # 5 pixels below the score bar
+
+        # Clear the area where the text is drawn
+        clear_margin = 15  # Margin to ensure complete coverage
+        background_color = (48, 46, 43)  # Background color of the border
+        clear_rect = pygame.Rect(score_bar_x - clear_margin, white_text_y - clear_margin,
+                                score_bar_width + 2 * clear_margin, white_text_surface.get_height() + 2 * clear_margin)
+        self.surface.fill(background_color, clear_rect)
+
+        # Clear the area for black text (below the bar)
+        clear_rect = pygame.Rect(score_bar_x - clear_margin, black_text_y - clear_margin,
+                                score_bar_width + 2 * clear_margin, black_text_surface.get_height() + 2 * clear_margin)
+        self.surface.fill(background_color, clear_rect)
+
+        # Draw the text onto the surface
+        self.surface.blit(black_text_surface, (white_text_x, white_text_y))
+        self.surface.blit(white_text_surface, (black_text_x, black_text_y))
 
 
     def draw_and_update_timer(self, surface, player1_time, player2_time):
         # Font for the timer
-        timer_font = pygame.font.SysFont("Arial", 20)
+        timer_font = pygame.font.SysFont("Gardenia Bold", 40)
 
         # Format time as MM:SS
         minutes_black, seconds_black = divmod(player1_time, 60)

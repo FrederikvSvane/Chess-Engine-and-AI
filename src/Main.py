@@ -122,6 +122,7 @@ class Main:
                         game = self.game
                         board = game.board
                         dragPiece = game.dragPiece
+                        self.gameBoarder.draw_score_bar(chessboard_surface,board)
 
                 if event.type == pygame.QUIT:
                     pygame.quit()
