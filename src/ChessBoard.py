@@ -63,7 +63,7 @@ class ChessBoard:
         startSquare = move.startSquare
         targetSquare = move.targetSquare
 
-        enPassantEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
+        enPassantSquareIsEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
 
         # Updates the backend board
         captured_piece = self.squares[targetSquare.row][targetSquare.col].piece
@@ -74,7 +74,7 @@ class ChessBoard:
             # En passant capture
             #TODO den her spiller ikke den rigtige capture sound. Skal fikses
             diff = targetSquare.col - startSquare.col
-            if diff != 0 and enPassantEmpty:
+            if diff != 0 and enPassantSquareIsEmpty:
                 self.squares[startSquare.row][startSquare.col + diff].piece = None
                 self.squares[targetSquare.row][targetSquare.col].piece = piece
             # Pawn promotion (happens inside an else here, beucase en passant and promotion can not happen at the same time)
@@ -194,30 +194,32 @@ class ChessBoard:
                 if self.squares[row][col-1].hasEnemyPiece(piece.color):
                     enemyPiece = self.squares[row][col-1].piece
                     if isinstance(enemyPiece, Pawn):
-                        startSquare = BoardSquare(row, col)
-                        targetSquare = BoardSquare(targetRow, col-1, enemyPiece)
-                        move = Move(startSquare, targetSquare)
+                        if enemyPiece.enPassant:
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(targetRow, col-1, enemyPiece)
+                            move = Move(startSquare, targetSquare)
 
-                        if normalCall:
-                            if not self.isInCheck(piece, move):
+                            if normalCall:
+                                if not self.isInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
                                 piece.addMove(move)
-                        else:
-                            piece.addMove(move)
 
             # Right en passant
             if BoardSquare.isOnBoard(col+1) and row == startRow:
                 if self.squares[row][col+1].hasEnemyPiece(piece.color):
                     enemyPiece = self.squares[row][col+1].piece
                     if isinstance(enemyPiece, Pawn):
-                        startSquare = BoardSquare(row, col)
-                        targetSquare = BoardSquare(targetRow, col+1, enemyPiece)
-                        move = Move(startSquare, targetSquare)
+                        if enemyPiece.enPassant:
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(targetRow, col+1, enemyPiece)
+                            move = Move(startSquare, targetSquare)
 
-                        if normalCall:
-                            if not self.isInCheck(piece, move):
+                            if normalCall:
+                                if not self.isInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
                                 piece.addMove(move)
-                        else:
-                            piece.addMove(move)
             
 
         def knightMoves(piece, row, col):
