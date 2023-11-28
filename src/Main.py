@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import contextlib
 from Move import Move
@@ -98,8 +99,10 @@ class Main:
                                 
                                 #Change the player turn, and check if the other player is in checkmate
                                 game.nextTurn()
+
                                 if board.isInCheckmate(game.currentPlayer):
                                     print(f"{game.currentPlayer} is in checkmate")
+                                    # End screen kan blive indsat lige her :D
 
                             #After making the move, draw the pieces
                             game.drawChessBoard(screen)
@@ -109,6 +112,22 @@ class Main:
                         dragPiece.piece.clearMoves()
                     
                     dragPiece.stopDraggingPiece()
+
+                #Making an AI make a move. Right now, the AI can only play as black
+                if game.currentPlayer == 'Black':
+                    allMoves = board.getAllPossibleMoves(game.currentPlayer)
+                    if allMoves:
+                        #move = board.MinMax(allMoves)
+                        AImove = random.choice(allMoves)
+                        AIpiece = board.squares[AImove.startSquare.row][AImove.startSquare.col].piece
+                        if AIpiece:
+                            board.movePiece(AIpiece, AImove)
+                            game.nextTurn()
+
+                        game.drawChessBoard(screen)
+                        game.showLastMove(screen)
+                        game.drawPieces(screen)
+
                 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:

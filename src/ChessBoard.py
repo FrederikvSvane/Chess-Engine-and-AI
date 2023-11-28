@@ -412,9 +412,20 @@ class ChessBoard:
         elif piece.name == 'Queen': queenMoves()
         elif piece.name == 'King': kingMoves()
 
+    def getAllPossibleMoves(self, color):
+        allMoves = []
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if piece and piece.color == color:
+                    self.possibleMoves(piece, row, col, normalCall=False)
+                    for move in piece.moves:
+                        allMoves.append(move)
+        return allMoves
+
     def castling(self, startSquare, targetSquare): 
         return abs(startSquare.col - targetSquare.col) == 2
-    
+        
     def setEnPassantTrue(self, piece):
         for row in range(boardSize):
             for col in range(boardSize):
