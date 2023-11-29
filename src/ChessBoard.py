@@ -140,6 +140,98 @@ class ChessBoard:
     def validMove(self, piece, move):
         return move in piece.moves
 
+    def getAllPossibleMoves(self, color):
+        allMoves = []
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if piece and piece.color == color:
+                    self.possibleMoves(piece, row, col, normalCall=False)
+                    for move in piece.moves:
+                        allMoves.append(move)
+        return allMoves
+
+    def castling(self, startSquare, targetSquare): 
+        return abs(startSquare.col - targetSquare.col) == 2
+        
+    def setEnPassantTrue(self, piece):
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if isinstance(self.squares[row][col].piece, Pawn):
+                    self.squares[row][col].piece.enPassant = False
+        if isinstance(piece, Pawn):
+            piece.enPassant = True
+
+    def moveWillResultInCheck(self, piece, move): #Lækker copy logik her som kan bruges til AI!! TODO AI, optimization
+        tempPiece = copy.deepcopy(piece)
+        tempBoard = copy.deepcopy(self)
+        tempBoard.movePiece(tempPiece, move, playSound=False)
+
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if tempBoard.squares[row][col].hasEnemyPiece(piece.color):
+                    enemyPiece = tempBoard.squares[row][col].piece
+                    tempBoard.possibleMoves(enemyPiece, row, col, normalCall=False) #NormalCall is set to false to prevent infinite recursion
+                    for move in enemyPiece.moves:
+                        if isinstance(move.targetSquare.piece, King):
+                            return True
+        return False
+    
+    def isInCheck(self, king:King):
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if self.squares[row][col].hasEnemyPiece(king.color):
+                    enemyPiece = self.squares[row][col].piece
+                    self.possibleMoves(enemyPiece, row, col, normalCall=False)
+                    for move in enemyPiece.moves:
+                        if isinstance(move.targetSquare.piece, King):
+                            return True
+        return False
+
+    def isInCheckmate(self, kingColor):
+        #Find the king
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if isinstance(piece, King) and piece.color == kingColor:
+                    king = piece
+                    print(f"{kingColor}'s king found at square {row}, {col}")
+                    break
+        #If the king is not in check, it is not in checkmate
+        if not self.isInCheck(king):
+            print("King is not in check")
+            return False
+        else:
+            print("King is in check.")
+
+        #Check if any move can take the king out of check
+        print("Checking if any moves can take him out of check")
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if piece is not None and piece.color == kingColor:
+                    print(f"{kingColor} {piece} found at {row}, {col}")
+                    possibleMoves = self.possibleMoves(piece, row, col, normalCall=False)
+                    if possibleMoves is None:
+                        print(f"No possible moves for {piece}")
+                        continue
+                    for move in possibleMoves:
+                        tempBoard = copy.deepcopy(self)
+                        #This tries every single legal move of every single piece
+                        tempBoard.movePiece(piece, move, playSound=False)
+                        if not tempBoard.isInCheck(king):
+                            print(f"Move found that takes king out of check!")
+                            return False
+        #If no move can take the king out of check, it is checkmate
+        return True
+
+
+
+
+# -------------- POSSIBLE MOVES -------------------
+
+
+
     #TODO selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
     def possibleMoves(self, piece, row, col, normalCall=True): #The normalCall is used to prevent infinite recursion inside isInCheck
         # Calculates possible moves for a piece on a given square
@@ -158,7 +250,7 @@ class ChessBoard:
                         move = Move(startSquare, targetSquare)
 
                         if normalCall:
-                            if not self.isInCheck(piece, move):
+                            if not self.moveWillResultInCheck(piece, move):
                                 piece.addMove(move)
                         else:
                             piece.addMove(move)
@@ -181,7 +273,7 @@ class ChessBoard:
                         move = Move(startSquare, targetSquare)
 
                         if normalCall:
-                            if not self.isInCheck(piece, move):
+                            if not self.moveWillResultInCheck(piece, move):
                                 piece.addMove(move)
                         else:
                             piece.addMove(move)
@@ -200,7 +292,7 @@ class ChessBoard:
                             move = Move(startSquare, targetSquare)
 
                             if normalCall:
-                                if not self.isInCheck(piece, move):
+                                if not self.moveWillResultInCheck(piece, move):
                                     piece.addMove(move)
                             else:
                                 piece.addMove(move)
@@ -216,7 +308,7 @@ class ChessBoard:
                             move = Move(startSquare, targetSquare)
 
                             if normalCall:
-                                if not self.isInCheck(piece, move):
+                                if not self.moveWillResultInCheck(piece, move):
                                     piece.addMove(move)
                             else:
                                 piece.addMove(move)
@@ -245,7 +337,7 @@ class ChessBoard:
                         move = Move(startSquare, targetSquare)
 
                         if normalCall:
-                            if not self.isInCheck(piece, move):
+                            if not self.moveWillResultInCheck(piece, move):
                                 piece.addMove(move)
                         else:
                             piece.addMove(move)
@@ -271,7 +363,7 @@ class ChessBoard:
                         
                         if self.squares[possibleMoveRow][possibleMoveCol].isEmpty():
                             if normalCall:
-                                if not self.isInCheck(piece, move):
+                                if not self.moveWillResultInCheck(piece, move):
                                     piece.addMove(move)
                             else:
                                 piece.addMove(move)
@@ -281,7 +373,7 @@ class ChessBoard:
 
                         elif self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
                             if normalCall:
-                                if not self.isInCheck(piece, move):
+                                if not self.moveWillResultInCheck(piece, move):
                                     piece.addMove(move)
                             else:
                                 piece.addMove(move)
@@ -342,7 +434,7 @@ class ChessBoard:
                         move = Move(startSquare, targetSquare)
                         
                         if normalCall:
-                            if not self.isInCheck(piece, move):
+                            if not self.moveWillResultInCheck(piece, move):
                                 piece.addMove(move)
                         else:
                             break # Skal der breakes her? Er det en bug? I am not sure. TODO spørg chat
@@ -370,7 +462,7 @@ class ChessBoard:
                             kingMove = Move(startSquare, targetSquare) 
 
                             if normalCall:
-                                if not self.isInCheck(piece, kingMove) and not self.isInCheck(leftRook, rookMove):
+                                if not self.moveWillResultInCheck(piece, kingMove) and not self.moveWillResultInCheck(leftRook, rookMove):
                                     leftRook.addMove(rookMove)
                                     piece.addMove(kingMove)
                             else:
@@ -397,7 +489,7 @@ class ChessBoard:
                             kingMove = Move(startSquare, targetSquare)
 
                             if normalCall:
-                                if not self.isInCheck(piece, kingMove) and not self.isInCheck(rightRook, rookMove):
+                                if not self.moveWillResultInCheck(piece, kingMove) and not self.moveWillResultInCheck(rightRook, rookMove):
                                     rightRook.addMove(rookMove)
                                     piece.addMove(kingMove)
                             else:
@@ -411,74 +503,6 @@ class ChessBoard:
         elif piece.name == 'Rook': rookMoves()
         elif piece.name == 'Queen': queenMoves()
         elif piece.name == 'King': kingMoves()
-
-    def getAllPossibleMoves(self, color):
-        allMoves = []
-        for row in range(boardSize):
-            for col in range(boardSize):
-                piece = self.squares[row][col].piece
-                if piece and piece.color == color:
-                    self.possibleMoves(piece, row, col, normalCall=False)
-                    for move in piece.moves:
-                        allMoves.append(move)
-        return allMoves
-
-    def castling(self, startSquare, targetSquare): 
-        return abs(startSquare.col - targetSquare.col) == 2
-        
-    def setEnPassantTrue(self, piece):
-        for row in range(boardSize):
-            for col in range(boardSize):
-                if isinstance(self.squares[row][col].piece, Pawn):
-                    self.squares[row][col].piece.enPassant = False
-        if isinstance(piece, Pawn):
-            piece.enPassant = True
-
-    def isInCheck(self, piece, move): #Lækker copy logik her som kan bruges til AI!! TODO AI, optimization
-        tempPiece = copy.deepcopy(piece)
-        tempBoard = copy.deepcopy(self)
-        tempBoard.movePiece(tempPiece, move, playSound=False)
-
-        for row in range(boardSize):
-            for col in range(boardSize):
-                if tempBoard.squares[row][col].hasEnemyPiece(piece.color):
-                    enemyPiece = tempBoard.squares[row][col].piece
-                    tempBoard.possibleMoves(enemyPiece, row, col, normalCall=False) #NormalCall is set to false to prevent infinite recursion
-                    for move in enemyPiece.moves:
-                        if isinstance(move.targetSquare.piece, King):
-                            return True
-        return False
-    
-    def isInCheckmate(self, kingColor):
-        #Find the king
-        for row in range(boardSize):
-            for col in range(boardSize):
-                piece = self.squares[row][col].piece
-                if isinstance(piece, King) and piece.color == kingColor:
-                    kingSquare = self.squares[row][col]
-                    king = piece
-                    break
-        #If the king is not in check, it is not in checkmate
-        move = Move(kingSquare, kingSquare)
-        if not self.isInCheck(king, move):
-            return False
-        #Check if any move can take the king out of check
-        for row in range(boardSize):
-            for col in range(boardSize):
-                piece = self.squares[row][col].piece
-                if piece is not None and piece.color == kingColor:
-                    possibleMoves = self.possibleMoves(piece, row, col, normalCall=False)
-                    if possibleMoves is None:
-                        continue
-                    for move in possibleMoves:
-                        tempBoard = copy.deepcopy(self)
-                        #This tries every single legal move of every single piece
-                        tempBoard.movePiece(piece, move, playSound=False)
-                        if not tempBoard.isInCheck(king, move):
-                            return False
-        #If no move can take the king out of check, it is checkmate
-        return True
-
                     
         
 
