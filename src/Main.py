@@ -7,12 +7,14 @@ from BoardSquare import BoardSquare
 from GameConfig import *
 from StartMenu import start_menu
 
+
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame
 
 from GlobalConstants import *
 from Game import Game
 from GameBoarder import GameBoarder
+from EndGameScreen import EndGameScreen
 
 # Set the position of the window
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (500, 100)
@@ -21,7 +23,21 @@ os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (500, 100)
 class Main:
     def __init__(self):
         # Logic for initializing the game after the start menu
+        self.offset_y = None
+        self.offset_x = None
+        self.game = None
+        self.gameBoarder = None
+        self.screen = None
         self.config = GameConfig()
+        self.start_new_game()
+
+        if start_menu(self.config):
+            self.start_new_game()
+        else:
+            pygame.quit()
+            sys.exit()
+
+    def start_new_game(self):
         if start_menu(self.config):
             pygame.init()
             self.gameBoarder = GameBoarder(windowWidthWithBorder, windowHeightWithBorder)
@@ -30,7 +46,6 @@ class Main:
             self.game = Game(self.config)
             self.offset_x = BORDER_WIDTH
             self.offset_y = BORDER_HEIGHT
-
             self.mainloop()
         else:
             pygame.quit()
@@ -39,6 +54,8 @@ class Main:
         game = self.game
         board = game.board
         dragPiece = self.game.dragPiece
+        game.board.isFirstMoveOver = False
+        GlobalConstants.gameStarted = False
 
         while True:
             # Draw the chessboard and pieces
@@ -49,7 +66,7 @@ class Main:
 
             # Draw the player names and images
             game.update_timer()
-            self.gameBoarder.draw_score_bar(chessboard_surface,board)
+            self.gameBoarder.draw_score_bar(chessboard_surface, board)
             self.gameBoarder.draw_player_info(self.game.player1_name, self.game.player2_name, chessboard_surface)
 
             # Logic for showing square that is hovered over
@@ -110,7 +127,7 @@ class Main:
                             move = Move(startSquare, endSquare)
                             if board.validMove(dragPiece.piece, move):
                                 board.movePiece(dragPiece.piece, move)
-                                self.gameBoarder.draw_score_bar(chessboard_surface,board)
+                                self.gameBoarder.draw_score_bar(chessboard_surface, board)
                                 game.nextTurn()
 
                         dragPiece.piece.clearMoves()
@@ -118,11 +135,13 @@ class Main:
 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
-                        game.resetGame(self.config)
-                        game = self.game
-                        board = game.board
-                        dragPiece = game.dragPiece
-                        self.gameBoarder.draw_score_bar(chessboard_surface,board)
+                        if EndGameScreen(self.config):
+                            self.start_new_game()
+                        # game.resetGame(self.config)
+                        # game = self.game
+                        # board = game.board
+                        # dragPiece = game.dragPiece
+                        # self.gameBoarder.draw_score_bar(chessboard_surface,board)
 
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -133,4 +152,3 @@ class Main:
 
 if __name__ == "__main__":
     main = Main()
-    main.mainloop()
