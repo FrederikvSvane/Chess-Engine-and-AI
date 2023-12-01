@@ -16,19 +16,29 @@ def start_menu(config):
     welcome_rect = welcome_text.get_rect(center=(400, 50))
 
     # Input Boxes
-    input_box1 = pygame.Rect(300, 150, 200, 32)
-    input_box2 = pygame.Rect(300, 200, 200, 32)
+    input_box1 = pygame.Rect(screen.get_width() - 750, screen.get_height() - 450, 250, 50)
+    input_box2 = pygame.Rect(screen.get_width() - 750, screen.get_height() - 350, 250, 50)
     color_inactive = pygame.Color('lightskyblue3')
     color_active = pygame.Color('dodgerblue2')
     color1 = color_inactive
     color2 = color_inactive
     active_box = None
-    text1 = ''
-    text2 = ''
+    pvp_active = True  # PVP is active by default
+    pva_active = False
+    text1 = 'Enter name'
+    text2 = 'Enter name'
 
     # Start Button
-    button = pygame.Rect(300, 300, 200, 50)
-    button_color = pygame.Color('gray15')
+    start_button = pygame.Rect(screen.get_width() - 500, screen.get_height() - 150, 200, 50)
+    start_button_color = pygame.Color('gray15')
+
+    # Pvp button
+    pvp_button = pygame.Rect(screen.get_width() - 300, screen.get_height() - 450, 250, 50)
+    pvp_button_color = pygame.Color('gray15')
+
+    # Player vs AI button
+    pva_button = pygame.Rect(screen.get_width() - 300, screen.get_height() - 350, 250, 50)
+    pva_button_color = pygame.Color('gray15')
 
     done = False
     while not done:
@@ -40,18 +50,38 @@ def start_menu(config):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if input_box1.collidepoint(event.pos):
                     active_box = input_box1
+                    if text1 == 'Enter name':
+                        text1 = ''
+                    if text2.strip() == '':
+                        text2 = 'Enter name'
                 elif input_box2.collidepoint(event.pos):
                     active_box = input_box2
+                    if text2 == 'Enter name':
+                        text2 = ''
+                    if text1.strip() == '':
+                        text1 = 'Enter name'
                 else:
                     active_box = None
+                    if text1 == '':
+                        text1 = 'Enter name'
+                    if text2 == '':
+                        text2 = 'Enter name'
 
-                if button.collidepoint(event.pos):
+                if start_button.collidepoint(event.pos):
                     config.player1_name = text1
                     config.player2_name = text2
                     return True
 
                 color1 = color_active if active_box == input_box1 else color_inactive
                 color2 = color_active if active_box == input_box2 else color_inactive
+
+                if pvp_button.collidepoint(event.pos):
+                    pvp_active = True
+                    pva_active = False
+                elif pva_button.collidepoint(event.pos):
+                    pvp_active = False
+                    pva_active = True
+                    config.AI = True
 
             if event.type == pygame.KEYDOWN:
                 if active_box == input_box1:
@@ -71,27 +101,41 @@ def start_menu(config):
         screen.blit(welcome_text, welcome_rect)
 
         # Input Labels
-        player1_label = font.render("Enter Player 1:", True, pygame.Color('white'))
-        player2_label = font.render("Enter Player 2:", True, pygame.Color('white'))
+        player1_label = font.render("Enter black name:", True, pygame.Color('white'))
+        player2_label = font.render("Enter white name:", True, pygame.Color('white'))
         screen.blit(player1_label, (input_box1.x, input_box1.y - 30))
         screen.blit(player2_label, (input_box2.x, input_box2.y - 30))
 
         # Input Boxes
-        txt_surface1 = font.render(text1, True, color1)
-        txt_surface2 = font.render(text2, True, color2)
-        width1 = max(200, txt_surface1.get_width() + 10)
+        txt_surface1 = font.render(text1, True, pygame.Color('white'))
+        txt_surface2 = font.render(text2, True, pygame.Color('white'))
+        width1 = max(250, txt_surface1.get_width() + 10)
         input_box1.w = width1
-        width2 = max(200, txt_surface2.get_width() + 10)
+        width2 = max(250, txt_surface2.get_width() + 10)
         input_box2.w = width2
-        screen.blit(txt_surface1, (input_box1.x + 5, input_box1.y + 5))
-        screen.blit(txt_surface2, (input_box2.x + 5, input_box2.y + 5))
+        screen.blit(txt_surface1, (input_box1.x + 5, input_box1.y + 13))
+        screen.blit(txt_surface2, (input_box2.x + 5, input_box2.y + 13))
         pygame.draw.rect(screen, color1, input_box1, 2)
         pygame.draw.rect(screen, color2, input_box2, 2)
 
         # Start Button
-        pygame.draw.rect(screen, button_color, button)
-        button_text = font.render("Start Game", True, pygame.Color('white'))
-        screen.blit(button_text, (button.x + 50, button.y + 10))
+        pygame.draw.rect(screen, start_button_color, start_button)
+        start_button_text = font.render("Start Game", True, pygame.Color('white'))
+        screen.blit(start_button_text, (start_button.x + 40, start_button.y + 15))
+
+        # Pvp button
+        pygame.draw.rect(screen, pvp_button_color, pvp_button)  # Draw background
+        border_color = color_active if pvp_active else color_inactive
+        pygame.draw.rect(screen, border_color, pvp_button, width=2)  # Draw border
+        pvp_button_text = font.render("Player vs Player", True, pygame.Color('white'))
+        screen.blit(pvp_button_text, (pvp_button.x + 40, pvp_button.y + 15))
+
+        # Pva
+        pygame.draw.rect(screen, pva_button_color, pva_button)  # Draw background
+        border_color = color_active if pva_active else color_inactive
+        pygame.draw.rect(screen, border_color, pva_button, width=2)  # Draw border
+        pva_button_text = font.render("Player vs AI", True, pygame.Color('white'))
+        screen.blit(pva_button_text, (pva_button.x + 65, pva_button.y + 15))
 
         pygame.display.flip()
         clock.tick(30)

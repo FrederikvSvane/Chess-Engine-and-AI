@@ -9,7 +9,6 @@ from Pieces import Pawn
 from GameConfig import *
 from StartMenu import start_menu
 
-
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame
 
@@ -32,12 +31,6 @@ class Main:
         self.screen = None
         self.config = GameConfig()
         self.start_new_game()
-
-        if start_menu(self.config):
-            self.start_new_game()
-        else:
-            pygame.quit()
-            sys.exit()
 
     def start_new_game(self):
         if start_menu(self.config):
@@ -134,10 +127,10 @@ class Main:
                                 board.movePiece(dragPiece.piece, move)
                                 self.gameBoarder.draw_score_bar(chessboard_surface, board)
 
-                                #If an en passant move was just made, set the enPassant flag to true. Otherwise, set it to false
+                                # If an en passant move was just made, set the enPassant flag to true. Otherwise, set it to false
                                 board.setEnPassantTrue(dragPiece.piece)
 
-                                #Change the player turn, and check if the other player is in checkmate
+                                # Change the player turn, and check if the other player is in checkmate
                                 game.nextTurn()
 
                                 if board.isInCheckmate(game.currentPlayer):
@@ -145,7 +138,7 @@ class Main:
                                     if EndGameScreen(self.config):
                                         self.start_new_game()
 
-                            #After making the move, draw the pieces
+                            # After making the move, draw the pieces
                             game.drawChessBoard(chessboard_surface)
                             game.showLastMove(chessboard_surface)
                             game.drawPieces(chessboard_surface)
@@ -153,31 +146,30 @@ class Main:
                         dragPiece.piece.clearMoves()
                     dragPiece.stopDraggingPiece()
 
+                if self.config.AI:
+                    # Making an AI make a move. Right now, the AI can only play as black
+                    if game.currentPlayer == 'Black':
+                        allMoves = board.getAllPossibleMoves(game.currentPlayer)
+                        if allMoves:
+                            # move = board.MinMax(allMoves)
+                            AImove = random.choice(allMoves)
+                            AIpiece = board.squares[AImove.startSquare.row][AImove.startSquare.col].piece
+                            if AIpiece:
+                                board.movePiece(AIpiece, AImove)
+                                game.nextTurn()
 
-                #Making an AI make a move. Right now, the AI can only play as black
-                if game.currentPlayer == 'Black':
-                    allMoves = board.getAllPossibleMoves(game.currentPlayer)
-                    if allMoves:
-                        #move = board.MinMax(allMoves)
-                        AImove = random.choice(allMoves)
-                        AIpiece = board.squares[AImove.startSquare.row][AImove.startSquare.col].piece
-                        if AIpiece:
-                            board.movePiece(AIpiece, AImove)
-                            game.nextTurn()
-
-                        game.drawChessBoard(chessboard_surface)
-                        game.showLastMove(chessboard_surface)
-                        game.drawPieces(chessboard_surface)
+                            game.drawChessBoard(chessboard_surface)
+                            game.showLastMove(chessboard_surface)
+                            game.drawPieces(chessboard_surface)
 
 
-                elif event.type == pygame.KEYDOWN:
+                if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         game.resetGame(self.config)
                         game = self.game
                         board = game.board
                         dragPiece = game.dragPiece
-                        self.gameBoarder.draw_score_bar(chessboard_surface,board)
-
+                        self.gameBoarder.draw_score_bar(chessboard_surface, board)
 
                 # Quit game
                 if event.type == pygame.QUIT:
