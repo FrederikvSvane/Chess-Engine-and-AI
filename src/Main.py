@@ -18,7 +18,7 @@ from GameBoarder import GameBoarder
 from EndGameScreen import EndGameScreen
 
 # Set the position of the window
-os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (500, 100)
+os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (300, 50)
 
 
 class Main:
@@ -45,8 +45,14 @@ class Main:
         else:
             pygame.quit()
 
-    def mainloop(self) -> None:
+    def handle_end_game(self):
+        action = EndGameScreen(self.config)
+        if action == 'start_new':
+            self.start_new_game()
+        else:
+            pygame.quit()
 
+    def mainloop(self) -> None:
         game = self.game
         board = game.board
         dragPiece = self.game.dragPiece
@@ -133,18 +139,36 @@ class Main:
                                 # Change the player turn, and check if the other player is in checkmate
                                 game.nextTurn()
 
-                                if board.isInCheckmate(game.currentPlayer):
-                                    print(f"{game.currentPlayer} is in checkmate")
-                                    if EndGameScreen(self.config):
-                                        self.start_new_game()
+                            if board.isInCheckmate(game.currentPlayer):
+                                print(f"{game.currentPlayer} is in checkmate")
+                                action = EndGameScreen(self.config)
+                                if action == 'start_new':
+                                    self.start_new_game()
+                                elif action == 'restart':
+                                    GlobalConstants.gameStarted = False
+                                    self.game.board.isFirstMoveOver = False
+                                    screen = pygame.display.set_mode((windowWidthWithBorder, windowHeightWithBorder))
+                                    game.resetGame(self.config)
+                                    game = self.game
+                                    board = game.board
+                                    dragPiece = game.dragPiece
+                                    self.gameBoarder.draw_score_bar(screen, board)
+                                else:
+                                    pygame.quit()
+                                    sys.exit()
+
 
                             # After making the move, draw the pieces
                             game.drawChessBoard(chessboard_surface)
                             game.showLastMove(chessboard_surface)
                             game.drawPieces(chessboard_surface)
 
-                        dragPiece.piece.clearMoves()
+                        if dragPiece.piece:
+                            dragPiece.piece.clearMoves()
+
                     dragPiece.stopDraggingPiece()
+
+
 
                 if self.config.AI:
                     # Making an AI make a move. Right now, the AI can only play as black
@@ -178,6 +202,8 @@ class Main:
 
             # Update relevant parts of display (defaults to all/whole display)
             pygame.display.update()
+
+
 
 
 if __name__ == "__main__":

@@ -2,10 +2,11 @@ import pygame
 
 from StartMenu import start_menu
 from Game import Game
+from GameConfig import GameConfig
+
 
 def EndGameScreen(config):
     pygame.init()
-    game = Game(config)
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Ultra Mega Chess 9000 - EndGame")
 
@@ -22,6 +23,11 @@ def EndGameScreen(config):
     button_color = pygame.Color('gray15')
     button_text = font.render("Start New Game", True, pygame.Color('white'))
 
+    #restart buttom
+    restart_button = pygame.Rect(300, 400, 200, 50)  # Adjust position as needed
+    restart_button_color = pygame.Color('gray15')
+    restart_button_text = font.render("Restart Game", True, pygame.Color('white'))
+
     done = False
     while not done:
         for event in pygame.event.get():
@@ -31,8 +37,9 @@ def EndGameScreen(config):
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button.collidepoint(event.pos):
-                    return True
-
+                    return 'start_new'
+                if restart_button.collidepoint(event.pos):
+                    return 'restart'
         screen.fill((30, 30, 30))
 
         # Welcome Text
@@ -42,7 +49,10 @@ def EndGameScreen(config):
         pygame.draw.rect(screen, button_color, button)
         screen.blit(button_text, (button.x + 50, button.y + 10))
 
+        pygame.draw.rect(screen, restart_button_color, restart_button)
+        screen.blit(restart_button_text, (restart_button.x + 40, restart_button.y + 10))
+
         pygame.display.flip()
 
     pygame.quit()
-    return False
+    return 'quit'

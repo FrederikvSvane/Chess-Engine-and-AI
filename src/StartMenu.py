@@ -83,6 +83,14 @@ def start_menu(config):
                     if text3.strip() == '':
                         text3 = '10:00'  # Reset to default time if empt
 
+                if pvp_button.collidepoint(event.pos):
+                    pvp_active = True
+                    pva_active = False
+                elif pva_button.collidepoint(event.pos):
+                    pvp_active = False
+                    pva_active = True
+                    config.AI = True
+
                 if start_button.collidepoint(event.pos):
                     # Validate time format
                     if not validate_time_format(text3):
@@ -92,19 +100,15 @@ def start_menu(config):
                     # If time format is valid, configure the game settings
                     config.player1_name = text1
                     config.player2_name = text2
-                    config.start_time = text3  # Assuming your config can store this
+                    config.start_time = parse_time_to_seconds(text3)  # Assuming your config can store this
+                    config.AI = pva_active
                     return True  # Start the game
 
                 color1 = color_active if active_box == input_box1 else color_inactive
                 color2 = color_active if active_box == input_box2 else color_inactive
+                timer_box_color = color_active if active_box == timer_box else color_inactive
 
-                if pvp_button.collidepoint(event.pos):
-                    pvp_active = True
-                    pva_active = False
-                elif pva_button.collidepoint(event.pos):
-                    pvp_active = False
-                    pva_active = True
-                    config.AI = True
+
 
             if event.type == pygame.KEYDOWN:
                 if active_box == input_box1:
@@ -170,14 +174,18 @@ def start_menu(config):
         time_label = font.render("Enter Time (mm:ss):", True, pygame.Color('white'))
         screen.blit(time_label, (timer_box.x, timer_box.y - 30))
 
+        pygame.draw.rect(screen, timer_box_color, timer_box, 2)  # Use the updated timer_box_color
         txt_surface3 = font.render(text3, True, pygame.Color('white'))
-        width3 = max(250, txt_surface3.get_width() + 10)
-        timer_box.w = width3
         screen.blit(txt_surface3, (timer_box.x + 5, timer_box.y + 13))
-        pygame.draw.rect(screen, timer_box_color, timer_box, 2)
 
         pygame.display.flip()
         clock.tick(30)
 
     pygame.quit()
     return False
+
+
+def parse_time_to_seconds(time_str):
+    """Convert time from MM:SS format to seconds."""
+    minutes, seconds = map(int, time_str.split(':'))
+    return minutes * 60 + seconds
