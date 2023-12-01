@@ -72,7 +72,7 @@ class GameBoarder:
         score_bar_y = (self.surface.get_height() - chessboard_surface.get_height()) // 2
 
         # Calculate the material difference and the proportions of the score bar
-        material_difference = game.get_material_difference()
+        material_difference = game.getMaterialDifference()
         max_material_value = 36  # Maximum material value
 
         # Ensure the material difference is within the maximum range

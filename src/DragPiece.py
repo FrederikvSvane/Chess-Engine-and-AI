@@ -29,5 +29,5 @@ class DragPiece:
     def updateBlit(self, surface):
         if self.piece != None:
             self.piece.texture_rect.center = self.mouseX, self.mouseY
-            surface.blit(self.piece.image, self.piece.texture_rect)
+            surface.blit(Images[self.piece.imageKey], self.piece.texture_rect)
         

@@ -1,9 +1,7 @@
-from GlobalConstants import *
-from BoardSquare import BoardSquare
 from Pieces import *
 from Move import Move
-from Game import *
-from GlobalConstants import GlobalConstants
+import copy
+from BoardSquare import *
 
 
 class ChessBoard:
@@ -16,8 +14,8 @@ class ChessBoard:
         self.whiteMaterial = 0
         self.blackMaterial = 0
         self._create()
-        self._add_pieces('White')
-        self._add_pieces('Black')
+        self._addPieces('White')
+        self._addPieces('Black')
 
     def _create(self):
         # This actually fills the 2D array with BoardSquare objects
@@ -25,7 +23,7 @@ class ChessBoard:
             for col in range(boardSize):
                 self.squares[row][col] = BoardSquare(row, col)
 
-    def _add_pieces(self, color):
+    def _addPieces(self, color):
         # This adds the piece objects to the BoardSquare objects, drawing all pieces onto the board
         row_pawn, row_other = (6, 7) if color == 'White' else (1, 0)
 
@@ -60,17 +58,18 @@ class ChessBoard:
         # self.squares[3][5] = BoardSquare(4, 3, Rook('Black'))
         # self.squares[5][3] = BoardSquare(3, 3, King('White'))  
 
-    def movePiece(self, piece, move):
+    def movePiece(self, piece, move,playSound=True):
         if self.isFirstMoveOver is False:
             GlobalConstants.gameStarted = True
             self.isFirstMoveOver = True
+        startSquare = move.startSquare
+        targetSquare = move.targetSquare
 
-        start = move.start
-        end = move.end
+        enPassantSquareIsEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
 
         # Updates the backend board
         print(f"Before capture - White Material: {self.whiteMaterial}, Black Material: {self.blackMaterial}")
-        captured_piece = self.squares[end.row][end.col].piece
+        captured_piece = self.squares[targetSquare.row][targetSquare.col].piece
         if captured_piece is not None:
             if captured_piece.color == "White":
                 print(f"Capturing white piece of value: {captured_piece.value}")
@@ -80,60 +79,75 @@ class ChessBoard:
                 self.whiteMaterial -= captured_piece.value
         print(f"After capture - White Material: {self.whiteMaterial}, Black Material: {self.blackMaterial}")
 
-        self.squares[start.row][start.col].piece = None
-        self.squares[end.row][end.col].piece = piece
+        self.squares[startSquare.row][startSquare.col].piece = None
+        self.squares[targetSquare.row][targetSquare.col].piece = piece
 
-        # Pawn promotion
         if isinstance(piece, Pawn):
-            self.checkPromotion(piece, end)
+            # En passant capture
+            #TODO den her spiller ikke den rigtige capture sound. Skal fikses
+            diff = targetSquare.col - startSquare.col
+            if diff != 0 and enPassantSquareIsEmpty:
+                self.squares[startSquare.row][startSquare.col + diff].piece = None
+                self.squares[targetSquare.row][targetSquare.col].piece = piece
+            # Pawn promotion (happens inside an else here, beucase en passant and promotion can not happen at the same time)
+            else:
+                self.checkPromotion(piece, targetSquare)
 
         # Castling
         if isinstance(piece, King):
-            if self.castling(start, end):
-                diff = end.col - start.col
+            if self.castling(startSquare, targetSquare):
+                diff = targetSquare.col - startSquare.col
                 rook = piece.leftRook if diff < 0 else piece.rightRook
-                self.movePiece(rook, rook.moves[-1])
+                if rook.moves:
+                    self.movePiece(rook, rook.moves[-1], playSound=False)
+                else:
+                    pass # The rook has no moves that dont result in a check, so we can't castle
 
         # Register move and clear moves
         piece.moved = True
         piece.clearMoves()
 
-        # Load correct sound
-        if captured_piece is not None:
-            sound_file = "assets/Sounds/CaptureMove.wav"
-            # sound_file = "assets/Sounds/CheckBoomSound.wav"
-        else:
-            sound_file = "assets/Sounds/NormalMove.wav"  # TODO den her skal stå nederst, når de andre er lavet
 
-        # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
+        # TODO nu kan vi rokere og promote, så den her logik skal lige omtænkes. Den rigtige lyd må kunne blive indlæst og afspillet på en smart måde
+        if playSound:
+        #Load correct sound
+        #TODO lav en global Sound class med et felt for soundfile, sådan at den kan sættes og overskrives rundt omkring i forskellige metoder
+        #Og afspil den så inde i main loopet
+            if captured_piece is not None:
+                sound_file = "assets/Sounds/CaptureMove.wav"
+                #sound_file = "assets/Sounds/CheckBoomSound.wav"
+            else:
+                sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
 
-        # elif isinstance(move, CastleMove):
-        #     sound_file = "assets/Sounds/Castle.wav"
+            # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
 
-        # elif isinstance(piece, Pawn) and (end.row == 0 or end.row == 7):
-        #     sound_file = "assets/Sounds/Promotion.wav"
+            # elif isinstance(move, CastleMove):
+            #     sound_file = "assets/Sounds/Castle.wav"
 
-        # elif self.isCheck():
-        #     sound_file = "assets/Sounds/Check.wav"
-        #     sound_file = "assets/Sounds/CheckBoomSound.wav" :) :) :)
+            # elif isinstance(piece, Pawn) and (targetSquare.row == 0 or targetSquare.row == 7):
+            #     sound_file = "assets/Sounds/Promotion.wav"
 
-        # elif self.isCheckmate():
-        #     sound_file = "assets/Sounds/Checkmate.wav"
+            # elif self.isCheck():
+            #     sound_file = "assets/Sounds/Check.wav"
+            #     sound_file = "assets/Sounds/CheckBoomSound.wav" :) :) :)
 
-        # TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
-        # måske hotel room service af pitbull
+            # elif self.isCheckmate():
+            #     sound_file = "assets/Sounds/Checkmate.wav"
 
-        # Play sound
-        pygame.mixer.music.load(sound_file)
-        pygame.mixer.music.play()
+            #TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
+            #måske hotel room service af pitbull
 
-        # Update last move for rendering
-        self.lastMove = move
+            # Play sound
+            pygame.mixer.music.load(sound_file)
+            pygame.mixer.music.play()
 
-    def checkPromotion(self, piece, end):
-        if (end.row == 0 or end.row == 7):
+            # Update last move for rendering
+            self.lastMove = move
+
+    def checkPromotion(self, piece, targetSquare):
+        if (targetSquare.row == 0 or targetSquare.row == 7):
             # TODO add a popup window for choosing a piece to promote to
-            self.squares[end.row][end.col].piece = Queen(piece.color)
+            self.squares[targetSquare.row][targetSquare.col].piece = Queen(piece.color)
             if piece.color == 'White':
                 self.whiteMaterial += 10
             else:
@@ -142,47 +156,179 @@ class ChessBoard:
     def validMove(self, piece, move):
         return move in piece.moves
 
-    # TODO selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
-    def possibleMoves(self, piece, row, col):
+    def getAllPossibleMoves(self, color):
+        allMoves = []
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if piece and piece.color == color:
+                    self.possibleMoves(piece, row, col, normalCall=False)
+                    for move in piece.moves:
+                        allMoves.append(move)
+        return allMoves
+
+    def castling(self, startSquare, targetSquare):
+        return abs(startSquare.col - targetSquare.col) == 2
+
+    def setEnPassantTrue(self, piece):
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if isinstance(self.squares[row][col].piece, Pawn):
+                    self.squares[row][col].piece.enPassant = False
+        if isinstance(piece, Pawn):
+            piece.enPassant = True
+
+    def moveWillResultInCheck(self, piece, move): #Lækker copy logik her som kan bruges til AI!! TODO AI, optimization
+        tempPiece = copy.deepcopy(piece)
+        tempBoard = copy.deepcopy(self)
+        tempBoard.movePiece(tempPiece, move, playSound=False)
+
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if tempBoard.squares[row][col].hasEnemyPiece(piece.color):
+                    enemyPiece = tempBoard.squares[row][col].piece
+                    tempBoard.possibleMoves(enemyPiece, row, col, normalCall=False) #NormalCall is set to false to prevent infinite recursion
+                    for move in enemyPiece.moves:
+                        if isinstance(move.targetSquare.piece, King):
+                            return True
+        return False
+
+    def isInCheck(self, king:King):
+        for row in range(boardSize):
+            for col in range(boardSize):
+                if self.squares[row][col].hasEnemyPiece(king.color):
+                    enemyPiece = self.squares[row][col].piece
+                    self.possibleMoves(enemyPiece, row, col, normalCall=False)
+                    for move in enemyPiece.moves:
+                        if isinstance(move.targetSquare.piece, King):
+                            return True
+        return False
+
+    def isInCheckmate(self, kingColor):
+        #Find the king
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if isinstance(piece, King) and piece.color == kingColor:
+                    king = piece
+                    print(f"{kingColor}'s king found at square {row}, {col}")
+                    break
+        #If the king is not in check, it is not in checkmate
+        if not self.isInCheck(king):
+            print("King is not in check")
+            return False
+        else:
+            print("King is in check.")
+
+        #Check if any move can take the king out of check
+        print("Checking if any moves can take him out of check")
+        for row in range(boardSize):
+            for col in range(boardSize):
+                piece = self.squares[row][col].piece
+                if piece is not None and piece.color == kingColor:
+                    print(f"{kingColor} {piece} found at {row}, {col}")
+                    possibleMoves = self.possibleMoves(piece, row, col, normalCall=False)
+                    if possibleMoves is None:
+                        print(f"No possible moves for {piece}")
+                        continue
+                    for move in possibleMoves:
+                        tempBoard = copy.deepcopy(self)
+                        #This tries every single legal move of every single piece
+                        tempBoard.movePiece(piece, move, playSound=False)
+                        if not tempBoard.isInCheck(king):
+                            print(f"Move found that takes king out of check!")
+                            return False
+        #If no move can take the king out of check, it is checkmate
+        return True
+
+
+
+
+# -------------- POSSIBLE MOVES -------------------
+
+
+
+    #TODO selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
+    def possibleMoves(self, piece, row, col, normalCall=True): #The normalCall is used to prevent infinite recursion inside isInCheck
         # Calculates possible moves for a piece on a given square
 
-        # Nested methods for calculating possible moves for each piece:
         def pawnMoves(piece, row, col):
-            # TODO en passant
-            # TODO promotion
-            # TODO promotion capture
-
             steps = 1 if piece.moved else 2
-
+            
             # Move forward
-            start = row + piece.direction
-            end = row + (piece.direction * (1 + steps))
-            for possibleMoveRow in range(start, end, piece.direction):
+            startSquare = row + piece.direction
+            targetSquare = row + (piece.direction * (1 + steps))
+            for possibleMoveRow in range(startSquare, targetSquare, piece.direction):
                 if BoardSquare.isOnBoard(possibleMoveRow):
                     if self.squares[possibleMoveRow][col].isEmpty():
-                        firstSquare = BoardSquare(row, col)
-                        finalSquare = BoardSquare(possibleMoveRow, col)
+                        startSquare = BoardSquare(row, col)
+                        targetSquare = BoardSquare(possibleMoveRow, col)
+                        move = Move(startSquare, targetSquare)
 
-                        move = Move(firstSquare, finalSquare)
-                        piece.addMove(move)
+                        if normalCall:
+                            if not self.moveWillResultInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
                         # If the square is not empty, the path is blocked, so we break
                     else:
                         break
                     # And if the square is not on the board, we break
                 else:
                     break
-
+            
             # Move diagonally / capture
             possibleMoveRow = row + piece.direction
             possibleMoveCols = [col - 1, col + 1]
             for possibleMoveCol in possibleMoveCols:
                 if BoardSquare.isOnBoard(possibleMoveRow, possibleMoveCol):
                     if self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
-                        firstSquare = BoardSquare(row, col)
-                        finalSquare = BoardSquare(possibleMoveRow, possibleMoveCol)
+                        startSquare = BoardSquare(row, col)
+                        targetPiece = self.squares[possibleMoveRow][possibleMoveCol].piece
+                        targetSquare = BoardSquare(possibleMoveRow, possibleMoveCol, targetPiece)
+                        move = Move(startSquare, targetSquare)
 
-                        move = Move(firstSquare, finalSquare)
-                        piece.addMove(move)
+                        if normalCall:
+                            if not self.moveWillResultInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
+
+            # En passant
+            startRow = 3 if piece.color == 'White' else 4
+            targetRow = 2 if piece.color == 'White' else 5
+            # Left en passant
+            if BoardSquare.isOnBoard(col-1) and row == startRow:
+                if self.squares[row][col-1].hasEnemyPiece(piece.color):
+                    enemyPiece = self.squares[row][col-1].piece
+                    if isinstance(enemyPiece, Pawn):
+                        if enemyPiece.enPassant:
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(targetRow, col-1, enemyPiece)
+                            move = Move(startSquare, targetSquare)
+
+                            if normalCall:
+                                if not self.moveWillResultInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
+                                piece.addMove(move)
+
+            # Right en passant
+            if BoardSquare.isOnBoard(col+1) and row == startRow:
+                if self.squares[row][col+1].hasEnemyPiece(piece.color):
+                    enemyPiece = self.squares[row][col+1].piece
+                    if isinstance(enemyPiece, Pawn):
+                        if enemyPiece.enPassant:
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(targetRow, col+1, enemyPiece)
+                            move = Move(startSquare, targetSquare)
+
+                            if normalCall:
+                                if not self.moveWillResultInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
+                                piece.addMove(move)
+            
 
         def knightMoves(piece, row, col):
             # L shapes babyyy how the horse moves
@@ -197,18 +343,25 @@ class ChessBoard:
                 (row + 1, col + 2),
             ]
             for move in possibleMoves:
-                newRow, newCol = move
-                if BoardSquare.isOnBoard(newRow, newCol):
-                    if self.squares[newRow][newCol].isEmptyOrEnemy(piece.color):
-                        start = BoardSquare(row, col)
-                        end = BoardSquare(newRow, newCol)
-                        move = Move(start, end)
-                        piece.addMove(move)
+                possibleMoveRow, possibleMoveCol = move
+                if BoardSquare.isOnBoard(possibleMoveRow, possibleMoveCol):
+                    if self.squares[possibleMoveRow][possibleMoveCol].isEmptyOrEnemy(piece.color):
+                        startSquare = BoardSquare(row, col)
+                        targetPiece = self.squares[possibleMoveRow][possibleMoveCol].piece
+                        targetSquare = BoardSquare(possibleMoveRow, possibleMoveCol, targetPiece)
+
+                        move = Move(startSquare, targetSquare)
+
+                        if normalCall:
+                            if not self.moveWillResultInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            piece.addMove(move)
 
                         if piece.color == 'White' and row == 7 and col == 6:
-                            secretMove = Move(BoardSquare(row, col), BoardSquare(0, 3))
+                            secretMove = Move(BoardSquare(row, col), BoardSquare(0,3))
                             piece.addMove(secretMove)
-
+        
         def slidingPieceMoves(directions):
             for step in directions:
                 rowStep, colStep = step
@@ -217,42 +370,51 @@ class ChessBoard:
 
                 while True:
                     if BoardSquare.isOnBoard(possibleMoveRow, possibleMoveCol):
+                        
+                        startSquare = BoardSquare(row, col)
+                        targetPiece = self.squares[possibleMoveRow][possibleMoveCol].piece
+                        targetSquare = BoardSquare(possibleMoveRow, possibleMoveCol, targetPiece)
 
-                        firstSquare = BoardSquare(row, col)
-                        finalSquare = BoardSquare(possibleMoveRow, possibleMoveCol)
-
-                        move = Move(firstSquare, finalSquare)
-
+                        move = Move(startSquare, targetSquare)
+                        
                         if self.squares[possibleMoveRow][possibleMoveCol].isEmpty():
-                            piece.addMove(move)
+                            if normalCall:
+                                if not self.moveWillResultInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
+                                piece.addMove(move)
 
-                        if self.squares[possibleMoveRow][possibleMoveCol].hasFriendlyPiece(piece.color):
+                        elif self.squares[possibleMoveRow][possibleMoveCol].hasFriendlyPiece(piece.color):
                             break
 
-                        if self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
-                            piece.addMove(move)
+                        elif self.squares[possibleMoveRow][possibleMoveCol].hasEnemyPiece(piece.color):
+                            if normalCall:
+                                if not self.moveWillResultInCheck(piece, move):
+                                    piece.addMove(move)
+                            else:
+                                piece.addMove(move)
                             break
-
+                    
                     else:
                         break
-
+                        
                     possibleMoveRow = possibleMoveRow + rowStep
-                    possibleMoveCol = possibleMoveCol + colStep
+                    possibleMoveCol = possibleMoveCol + colStep                   
 
         def bishopMoves():
             slidingPieceMoves([
-                (-1, -1),  # Up left
-                (-1, 1),  # Up right
-                (1, 1),  # Down right
-                (1, -1)  # Down left
+                (-1, -1), # Up left
+                (-1, 1), # Up right
+                (1, 1), # Down right
+                (1, -1) # Down left
             ])
 
         def rookMoves():
             slidingPieceMoves([
-                (-1, 0),  # Up
-                (1, 0),  # Down
-                (0, 1),  # Right
-                (0, -1)  # Left
+                (-1, 0), # Up
+                (1, 0), # Down
+                (0, 1), # Right
+                (0, -1) # Left
             ])
 
         def queenMoves():
@@ -284,33 +446,45 @@ class ChessBoard:
                 newRow, newCol = move
                 if BoardSquare.isOnBoard(newRow, newCol):
                     if self.squares[newRow][newCol].isEmptyOrEnemy(piece.color):
-                        start = BoardSquare(row, col)
-                        end = BoardSquare(newRow, newCol)
-                        move = Move(start, end)
-                        piece.addMove(move)
+                        startSquare = BoardSquare(row, col)
+                        targetSquare = BoardSquare(newRow, newCol)
+                        move = Move(startSquare, targetSquare)
 
-            # Castling
+                        if normalCall:
+                            if not self.moveWillResultInCheck(piece, move):
+                                piece.addMove(move)
+                        else:
+                            break # Skal der breakes her? Er det en bug? I am not sure. TODO spørg chat
+            
+            #Castling
             if not piece.moved:
                 # Queen side
                 leftRook = self.squares[row][0].piece
                 if isinstance(leftRook, Rook) and not leftRook.moved:
                     for c in range(1, 4):
                         if self.squares[row][c].hasPiece():
-                            break  # If there is a piece in the way, we can't castle
+                            break #If there is a piece in the way, we can't castle
                         if c == 3:
                             piece.leftRook = leftRook
 
-                            # Rook move
-                            start = BoardSquare(row, 0)
-                            end = BoardSquare(row, 3)
-                            move = Move(start, end)
-                            leftRook.addMove(move)
+                            #Rook move
+                            startSquare = BoardSquare(row, 0)
+                            targetSquare = BoardSquare(row, 3)
+                            rookMove = Move(startSquare, targetSquare)
+                            leftRook.addMove(rookMove)
 
-                            # King move
-                            start = BoardSquare(row, col)
-                            end = BoardSquare(row, 2)
-                            move = Move(start, end)
-                            piece.addMove(move)
+                            #King move
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(row, 2)
+                            kingMove = Move(startSquare, targetSquare)
+
+                            if normalCall:
+                                if not self.moveWillResultInCheck(piece, kingMove) and not self.moveWillResultInCheck(leftRook, rookMove):
+                                    leftRook.addMove(rookMove)
+                                    piece.addMove(kingMove)
+                            else:
+                                leftRook.addMove(rookMove)
+                                piece.addMove(kingMove)
 
                             # King side
                 rightRook = self.squares[row][7].piece
@@ -321,35 +495,37 @@ class ChessBoard:
                         if c == 6:
                             piece.rightRook = rightRook
 
-                            # Rook move
-                            start = BoardSquare(row, 7)
-                            end = BoardSquare(row, 5)
-                            move = Move(start, end)
-                            rightRook.addMove(move)
+                            #Rook move
+                            startSquare = BoardSquare(row, 7)
+                            targetSquare = BoardSquare(row, 5)
+                            rookMove = Move(startSquare, targetSquare)
 
-                            # King move
-                            start = BoardSquare(row, col)
-                            end = BoardSquare(row, 6)
-                            move = Move(start, end)
-                            piece.addMove(move)
+                            #King move
+                            startSquare = BoardSquare(row, col)
+                            targetSquare = BoardSquare(row, 6)
+                            kingMove = Move(startSquare, targetSquare)
 
-                            # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
+                            if normalCall:
+                                if not self.moveWillResultInCheck(piece, kingMove) and not self.moveWillResultInCheck(rightRook, rookMove):
+                                    rightRook.addMove(rookMove)
+                                    piece.addMove(kingMove)
+                            else:
+                                rightRook.addMove(rookMove)
+                                piece.addMove(kingMove)
 
-        if piece.name == 'Pawn':
-            pawnMoves(piece, row, col)
-        elif piece.name == 'Knight':
-            knightMoves(piece, row, col)
-        elif piece.name == 'Bishop':
-            bishopMoves()
-        elif piece.name == 'Rook':
-            rookMoves()
-        elif piece.name == 'Queen':
-            queenMoves()
-        elif piece.name == 'King':
-            kingMoves()
+        # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
+        if piece.name == 'Pawn': pawnMoves(piece, row, col)
+        elif piece.name == 'Knight': knightMoves(piece, row, col)
+        elif piece.name == 'Bishop': bishopMoves()
+        elif piece.name == 'Rook': rookMoves()
+        elif piece.name == 'Queen': queenMoves()
+        elif piece.name == 'King': kingMoves()
+
+
+
 
     def castling(self, start, end):
         return abs(start.col - end.col) == 2
 
-    def get_material_difference(self):
+    def getMaterialDifference(self):
         return self.whiteMaterial - self.blackMaterial
