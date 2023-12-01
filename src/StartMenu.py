@@ -1,6 +1,9 @@
 import pygame
+import re
 
-
+def validate_time_format(time_str):
+    """ Check if the time is in MM:SS format """
+    return re.match(r'^\d{2}:\d{2}$', time_str) is not None
 def start_menu(config):
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -27,6 +30,11 @@ def start_menu(config):
     pva_active = False
     text1 = 'Enter name'
     text2 = 'Enter name'
+
+    timer_box = pygame.Rect(screen.get_width() - 750, screen.get_height() - 250, 250, 50)
+    timer_box_color = color_inactive
+    text3 = '10:00'  # Default time
+    active_box = None
 
     # Start Button
     start_button = pygame.Rect(screen.get_width() - 500, screen.get_height() - 150, 200, 50)
@@ -67,10 +75,25 @@ def start_menu(config):
                     if text2 == '':
                         text2 = 'Enter name'
 
+                if timer_box.collidepoint(event.pos):
+                    active_box = timer_box
+                    if text3 == '10:00':  # Default time text
+                        text3 = ''
+                else:
+                    if text3.strip() == '':
+                        text3 = '10:00'  # Reset to default time if empt
+
                 if start_button.collidepoint(event.pos):
+                    # Validate time format
+                    if not validate_time_format(text3):
+                        print("Invalid time format. Please enter time in MM:SS format.")
+                        continue  # Skip the rest of the loop and do not start the game
+
+                    # If time format is valid, configure the game settings
                     config.player1_name = text1
                     config.player2_name = text2
-                    return True
+                    config.start_time = text3  # Assuming your config can store this
+                    return True  # Start the game
 
                 color1 = color_active if active_box == input_box1 else color_inactive
                 color2 = color_active if active_box == input_box2 else color_inactive
@@ -94,6 +117,12 @@ def start_menu(config):
                         text2 = text2[:-1]
                     else:
                         text2 += event.unicode
+
+                if active_box == timer_box:
+                    if event.key == pygame.K_BACKSPACE:
+                        text3 = text3[:-1]
+                    else:
+                        text3 += event.unicode
 
         screen.fill((30, 30, 30))
 
@@ -136,6 +165,16 @@ def start_menu(config):
         pygame.draw.rect(screen, border_color, pva_button, width=2)  # Draw border
         pva_button_text = font.render("Player vs AI", True, pygame.Color('white'))
         screen.blit(pva_button_text, (pva_button.x + 65, pva_button.y + 15))
+
+        # Timer
+        time_label = font.render("Enter Time (mm:ss):", True, pygame.Color('white'))
+        screen.blit(time_label, (timer_box.x, timer_box.y - 30))
+
+        txt_surface3 = font.render(text3, True, pygame.Color('white'))
+        width3 = max(250, txt_surface3.get_width() + 10)
+        timer_box.w = width3
+        screen.blit(txt_surface3, (timer_box.x + 5, timer_box.y + 13))
+        pygame.draw.rect(screen, timer_box_color, timer_box, 2)
 
         pygame.display.flip()
         clock.tick(30)
