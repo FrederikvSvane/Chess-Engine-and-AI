@@ -28,7 +28,7 @@ class Pawn(Piece):
     def __init__(self, color: str):
         self.direction = -1 if color == 'White' else 1
         self.enPassant = False
-        #TODO potential optimization here. Float could be replaced with int, potentially making MinMax faster
+        #TODO: potential optimization here. Float could be replaced with int, potentially making MinMax faster
         super().__init__(name='Pawn', color=color, value=1.0)
 
 

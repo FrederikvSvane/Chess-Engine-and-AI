@@ -27,7 +27,7 @@ class Game:
                 pygame.draw.rect(surface, color, square)
 
 
-                #TODO this code works, but it makes the game lag alot. Maybe find a better way to do this
+                #TODO: this code works, but it makes the game lag alot. Maybe find a better way to do this
                 #Show coordinates on the board
                 # if col == 0:
                 #     color = pygame.Color("burlywood1") if row % 2 != 0 else pygame.Color("sienna4")

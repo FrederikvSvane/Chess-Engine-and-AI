@@ -72,7 +72,7 @@ class ChessBoard:
 
         if isinstance(piece, Pawn):
             # En passant capture
-            #TODO den her spiller ikke den rigtige capture sound. Skal fikses
+            #TODO: den her spiller ikke den rigtige capture sound. Skal fikses
             diff = targetSquare.col - startSquare.col
             if diff != 0 and enPassantSquareIsEmpty:
                 self.squares[startSquare.row][startSquare.col + diff].piece = None
@@ -96,18 +96,18 @@ class ChessBoard:
         piece.clearMoves()
 
 
-        # TODO nu kan vi rokere og promote, så den her logik skal lige omtænkes. Den rigtige lyd må kunne blive indlæst og afspillet på en smart måde
+        # TODO: nu kan vi rokere og promote, så den her logik skal lige omtænkes. Den rigtige lyd må kunne blive indlæst og afspillet på en smart måde
         if playSound:
         #Load correct sound
-        #TODO lav en global Sound class med et felt for soundfile, sådan at den kan sættes og overskrives rundt omkring i forskellige metoder
+        #TODO: lav en global Sound class med et felt for soundfile, sådan at den kan sættes og overskrives rundt omkring i forskellige metoder
         #Og afspil den så inde i main loopet
             if captured_piece is not None:
                 sound_file = "assets/Sounds/CaptureMove.wav"
                 #sound_file = "assets/Sounds/CheckBoomSound.wav"
             else:
-                sound_file = "assets/Sounds/NormalMove.wav" #TODO den her skal stå nederst, når de andre er lavet
+                sound_file = "assets/Sounds/NormalMove.wav" #TODO: den her skal stå nederst, når de andre er lavet
 
-            # TODO implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
+            # TODO: implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
 
             # elif isinstance(move, CastleMove):
             #     sound_file = "assets/Sounds/Castle.wav"
@@ -122,7 +122,7 @@ class ChessBoard:
             # elif self.isCheckmate():
             #     sound_file = "assets/Sounds/Checkmate.wav"
 
-            #TODO lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
+            #TODO: lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
             #måske hotel room service af pitbull
 
             # Play sound
@@ -134,7 +134,7 @@ class ChessBoard:
 
     def checkPromotion(self, piece, targetSquare):
         if (targetSquare.row == 0 or targetSquare.row == 7):
-            # TODO add a popup window for choosing a piece to promote to
+            # TODO: add a popup window for choosing a piece to promote to
             self.squares[targetSquare.row][targetSquare.col].piece = Queen(piece.color)
 
     def validMove(self, piece, move):
@@ -240,7 +240,7 @@ class ChessBoard:
 
 
 
-    #TODO selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
+    #TODO: selvom den her metode er fed nok, så er den suuuuper langsom ift. bitboards. OBVIOUS OPTIMIZATION
     def possibleMoves(self, piece, row, col, normalCall=True): #The normalCall is used to prevent infinite recursion inside isInCheck
         # Calculates possible moves for a piece on a given square
 
@@ -504,7 +504,7 @@ class ChessBoard:
                                 rightRook.addMove(rookMove)
                                 piece.addMove(kingMove)
 
-        # TODO en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
+        # TODO: en måske optimization mulig her. Måske er isInstance(piece, Pawn) hurtigere end at tjekke piece.name == 'Pawn'?
         if piece.name == 'Pawn': pawnMoves(piece, row, col)
         elif piece.name == 'Knight': knightMoves(piece, row, col)
         elif piece.name == 'Bishop': bishopMoves()
