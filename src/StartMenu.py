@@ -98,8 +98,14 @@ def start_menu(config):
                         continue  # Skip the rest of the loop and do not start the game
 
                     # If time format is valid, configure the game settings
-                    config.player1_name = text1
-                    config.player2_name = text2
+                    if text1 == 'Enter name':
+                        config.player1_name = ''
+                    else:
+                        config.player1_name = text1
+                    if text2 == 'Enter name':
+                        config.player2_name = ''
+                    else:
+                        config.player2_name = text2
                     config.start_time = parse_time_to_seconds(text3)  # Assuming your config can store this
                     config.AI = pva_active
                     return True  # Start the game
