@@ -146,9 +146,10 @@ class ChessBoard:
             for col in range(boardSize):
                 piece = self.squares[row][col].piece
                 if piece and piece.color == color:
-                    self.possibleMoves(piece, row, col, normalCall=False)
+                    self.possibleMoves(piece, row, col, normalCall=True)
                     for move in piece.moves:
                         allMoves.append(move)
+                    piece.clearMoves()
         return allMoves
 
     def castling(self, startSquare, targetSquare): 
@@ -185,18 +186,22 @@ class ChessBoard:
                     self.possibleMoves(enemyPiece, row, col, normalCall=False)
                     for move in enemyPiece.moves:
                         if isinstance(move.targetSquare.piece, King):
+                            enemyPiece.clearMoves()
                             return True
+                    enemyPiece.clearMoves()
         return False
 
     def isInCheckmate(self, kingColor):
+
         #Find the king
         for row in range(boardSize):
             for col in range(boardSize):
-                piece = self.squares[row][col].piece
-                if isinstance(piece, King) and piece.color == kingColor:
-                    king = piece
+                friendlyPiece = self.squares[row][col].piece
+                if isinstance(friendlyPiece, King) and friendlyPiece.color == kingColor:
+                    king = friendlyPiece
                     print(f"{kingColor}'s king found at square {row}, {col}")
                     break
+
         #If the king is not in check, it is not in checkmate
         if not self.isInCheck(king):
             print("King is not in check")
@@ -204,24 +209,27 @@ class ChessBoard:
         else:
             print("King is in check.")
 
-        #Check if any move can take the king out of check
+
+        #Check if any move can take the king out of check:
+
+        #Finding all friendly pieces
         print("Checking if any moves can take him out of check")
         for row in range(boardSize):
             for col in range(boardSize):
-                piece = self.squares[row][col].piece
-                if piece is not None and piece.color == kingColor:
-                    print(f"{kingColor} {piece} found at {row}, {col}")
-                    possibleMoves = self.possibleMoves(piece, row, col, normalCall=False)
-                    if possibleMoves is None:
-                        print(f"No possible moves for {piece}")
-                        continue
-                    for move in possibleMoves:
-                        tempBoard = copy.deepcopy(self)
-                        #This tries every single legal move of every single piece
-                        tempBoard.movePiece(piece, move, playSound=False)
-                        if not tempBoard.isInCheck(king):
-                            print(f"Move found that takes king out of check!")
-                            return False
+                copyPiece = copy.deepcopy(self.squares[row][col].piece)
+                if copyPiece is not None and copyPiece.color == kingColor:
+                    # Find all possible moves for a given piece
+                    self.possibleMoves(copyPiece, row, col, normalCall=True)
+                    if copyPiece.moves is not None:
+                        for move in copyPiece.moves:
+                            print(f"checking move {move} for piece {copyPiece.name}")
+                            tempBoard = copy.deepcopy(self)
+                            #This tries every single legal move of every single piece
+                            tempBoard.movePiece(copyPiece, move, playSound=False)
+                            if not tempBoard.isInCheck(king):
+                                print(f"Move found that takes king out of check!")
+                                print(f"The move is {copyPiece} from {move.startSquare.row}, {move.startSquare.col} to {move.targetSquare.row}, {move.targetSquare.col}")
+                                return False
         #If no move can take the king out of check, it is checkmate
         return True
 
@@ -437,7 +445,7 @@ class ChessBoard:
                             if not self.moveWillResultInCheck(piece, move):
                                 piece.addMove(move)
                         else:
-                            break # Skal der breakes her? Er det en bug? I am not sure. TODO spørg chat
+                            piece.addMove(move) # Skal der breakes her? Er det en bug? I am not sure. TODO spørg chat
             
             #Castling
             if not piece.moved:

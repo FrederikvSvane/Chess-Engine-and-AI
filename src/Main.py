@@ -88,8 +88,8 @@ class Main:
                         startSquare = board.squares[dragPiece.initialRow][dragPiece.initialCol]
 
                         if BoardSquare.isOnBoard(chosenRow, chosenCol):
-                            endSquare = board.squares[chosenRow][chosenCol]
-                            move = Move(startSquare, endSquare)
+                            targetSquare = board.squares[chosenRow][chosenCol]
+                            move = Move(startSquare, targetSquare)
 
                             if board.validMove(dragPiece.piece, move):
                                 board.movePiece(dragPiece.piece, move)
