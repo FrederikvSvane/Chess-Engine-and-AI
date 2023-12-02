@@ -19,14 +19,12 @@ def EndGameScreen(config):
     welcome_rect = welcome_text.get_rect(center=(400, 50))
 
     # Start Button
-    button = pygame.Rect(300, 300, 200, 50)
-    button_color = pygame.Color('gray15')
-    button_text = font.render("Start New Game", True, pygame.Color('white'))
+    start_menu_button = pygame.Rect(screen.get_width() - 500, screen.get_height() - 150, 250, 50)
+    start_menu_button_color = pygame.Color('gray15')
 
     #restart buttom
-    restart_button = pygame.Rect(300, 400, 200, 50)  # Adjust position as needed
-    restart_button_color = pygame.Color('gray15')
-    restart_button_text = font.render("Restart Game", True, pygame.Color('white'))
+    play_again_button = pygame.Rect(screen.get_width() - 500, screen.get_height() - 250, 250, 50)
+    play_again_button_color = pygame.Color('gray15')
 
     done = False
     while not done:
@@ -36,21 +34,30 @@ def EndGameScreen(config):
                 return False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if button.collidepoint(event.pos):
+                if start_menu_button.collidepoint(event.pos):
                     return 'start_new'
-                if restart_button.collidepoint(event.pos):
+                if play_again_button.collidepoint(event.pos):
                     return 'restart'
         screen.fill((30, 30, 30))
 
         # Welcome Text
         screen.blit(welcome_text, welcome_rect)
 
-        # Button and Button Text
-        pygame.draw.rect(screen, button_color, button)
-        screen.blit(button_text, (button.x + 50, button.y + 10))
+        # Draw Start Menu Button and center its text
+        pygame.draw.rect(screen, start_menu_button_color, start_menu_button)
+        text_surface = font.render("Start New Game", True, pygame.Color('white'))
+        # Calculate text position
+        text_x = start_menu_button.x + (start_menu_button.width - text_surface.get_width()) // 2
+        text_y = start_menu_button.y + (start_menu_button.height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
 
-        pygame.draw.rect(screen, restart_button_color, restart_button)
-        screen.blit(restart_button_text, (restart_button.x + 40, restart_button.y + 10))
+        # Draw Play Again Button and center its text
+        pygame.draw.rect(screen, play_again_button_color, play_again_button)
+        restart_text_surface = font.render("Restart Game", True, pygame.Color('white'))
+        # Calculate text position
+        restart_text_x = play_again_button.x + (play_again_button.width - restart_text_surface.get_width()) // 2
+        restart_text_y = play_again_button.y + (play_again_button.height - restart_text_surface.get_height()) // 2
+        screen.blit(restart_text_surface, (restart_text_x, restart_text_y))
 
         pygame.display.flip()
 

@@ -167,14 +167,15 @@ def start_menu(config):
         border_color = color_active if pvp_active else color_inactive
         pygame.draw.rect(screen, border_color, pvp_button, width=2)  # Draw border
         pvp_button_text = font.render("Player vs Player", True, pygame.Color('white'))
-        screen.blit(pvp_button_text, (pvp_button.x + 40, pvp_button.y + 15))
+        screen.blit(pvp_button_text, (pvp_button.x + (pvp_button.width - pvp_button_text.get_width()) // 2, pvp_button.y + (pvp_button.height - pvp_button_text.get_height()) // 2))
 
         # Pva
         pygame.draw.rect(screen, pva_button_color, pva_button)  # Draw background
         border_color = color_active if pva_active else color_inactive
         pygame.draw.rect(screen, border_color, pva_button, width=2)  # Draw border
         pva_button_text = font.render("Player vs AI", True, pygame.Color('white'))
-        screen.blit(pva_button_text, (pva_button.x + 65, pva_button.y + 15))
+        screen.blit(pva_button_text, (pva_button.x + (pva_button.width - pva_button_text.get_width()) // 2, pva_button.y + (pva_button.height - pva_button_text.get_height()) // 2))
+
 
         # Timer
         time_label = font.render("Enter Time (mm:ss):", True, pygame.Color('white'))

@@ -45,13 +45,6 @@ class Main:
         else:
             pygame.quit()
 
-    def handle_end_game(self):
-        action = EndGameScreen(self.config)
-        if action == 'start_new':
-            self.start_new_game()
-        else:
-            pygame.quit()
-
     def mainloop(self) -> None:
         game = self.game
         board = game.board
