@@ -86,9 +86,10 @@ class Game:
             self.hoveredSquare = self.board.squares[row][col]
 
     def showLastMove(self, surface):
-        if self.board.lastMove:
-            startSquare = self.board.lastMove.startSquare
-            targetSquare = self.board.lastMove.targetSquare
+        if self.board.allMoves:
+            lastMove = self.board.allMoves[-1]
+            startSquare = lastMove.startSquare
+            targetSquare = lastMove.targetSquare
             light_color = (255, 178, 102, 128)
             dark_color = (170, 100, 35, 128)
 

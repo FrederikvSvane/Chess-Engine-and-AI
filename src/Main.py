@@ -5,6 +5,7 @@ import contextlib
 from Move import Move
 from BoardSquare import BoardSquare
 from Pieces import Pawn
+from AI import ChessAI
 
 with open(os.devnull, 'w') as f, contextlib.redirect_stdout(f):
     import pygame
@@ -19,6 +20,7 @@ class Main:
         self.screen = pygame.display.set_mode((windowWidth, windowHeight))
         pygame.display.set_caption("Ultra Mega Chess 9000")
         self.game = Game()
+        self.AI = ChessAI(self.game.board, 3)
 
     def mainloop(self) -> None:
 
@@ -26,6 +28,7 @@ class Main:
         board = self.game.board
         screen = self.screen
         dragPiece = self.game.dragPiece
+        AI = self.AI
 
         # Game loop here. Big boy motherfucka
         while True:
@@ -114,19 +117,19 @@ class Main:
                     dragPiece.stopDraggingPiece()
 
                 #Making an AI make a move. Right now, the AI can only play as black
-                if game.currentPlayer == 'Black':
-                    allMoves = board.getAllPossibleMoves(game.currentPlayer)
-                    if allMoves:
-                        #move = board.MinMax(allMoves)
-                        AImove = random.choice(allMoves)
-                        AIpiece = board.squares[AImove.startSquare.row][AImove.startSquare.col].piece
-                        if AIpiece:
-                            board.movePiece(AIpiece, AImove)
-                            game.nextTurn()
+                # if game.currentPlayer == 'Black':
+                #     allMoves = board.getAllPossibleMoves(game.currentPlayer)
+                #     if allMoves:
+                #         #move = board.MinMax(allMoves)
+                #         AImove = random.choice(allMoves)
+                #         AIpiece = board.squares[AImove.startSquare.row][AImove.startSquare.col].piece
+                #         if AIpiece:
+                #             board.movePiece(AIpiece, AImove)
+                #             game.nextTurn()
 
-                        game.drawChessBoard(screen)
-                        game.showLastMove(screen)
-                        game.drawPieces(screen)
+                #         game.drawChessBoard(screen)
+                #         game.showLastMove(screen)
+                #         game.drawPieces(screen)
 
                 
                 elif event.type == pygame.KEYDOWN:
@@ -135,6 +138,28 @@ class Main:
                         game = self.game
                         board = self.game.board
                         dragPiece = self.game.dragPiece
+                    
+                    if event.key == pygame.K_z:
+                        if board.allMoves:
+                            if game.currentPlayer == 'White': 
+                                # This is a bit of a hack, but it works. 
+                                # You have to undo twice when playing against the AI, otherwise it will only undo the AI's move, 
+                                # and the AI will then move again instantly, making it impossible to undo your own move
+                                board.undoMove()
+                                board.undoMove()
+                                game.nextTurn()
+                                game.nextTurn()
+
+                                game.drawChessBoard(screen)
+                                game.showLastMove(screen)
+                                game.drawPieces(screen)
+                            else:
+                                board.undoMove()
+                                game.nextTurn()
+
+                                game.drawChessBoard(screen)
+                                game.showLastMove(screen)
+                                game.drawPieces(screen)
 
 
                 # Quit game

@@ -10,7 +10,7 @@ class ChessBoard:
     def __init__(self):
         # This just creates the 2D array
         self.squares = [[0, 0, 0, 0, 0, 0, 0, 0] for col in range(boardSize)]
-        self.lastMove = None
+        self.allMoves = []
 
         self._create()
         self._addPieces('White')
@@ -63,74 +63,90 @@ class ChessBoard:
         startSquare = move.startSquare
         targetSquare = move.targetSquare
 
-        enPassantSquareIsEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
+        move.capturedPiece = self.squares[targetSquare.row][targetSquare.col].piece
 
         # Updates the backend board
-        captured_piece = self.squares[targetSquare.row][targetSquare.col].piece
-        self.squares[startSquare.row][startSquare.col].piece = None
-        self.squares[targetSquare.row][targetSquare.col].piece = piece
+        self.updateBoard(piece, startSquare, targetSquare)
 
-        if isinstance(piece, Pawn):
-            # En passant capture
-            #TODO: den her spiller ikke den rigtige capture sound. Skal fikses
-            diff = targetSquare.col - startSquare.col
-            if diff != 0 and enPassantSquareIsEmpty:
-                self.squares[startSquare.row][startSquare.col + diff].piece = None
-                self.squares[targetSquare.row][targetSquare.col].piece = piece
-            # Pawn promotion (happens inside an else here, beucase en passant and promotion can not happen at the same time)
-            else:    
-                self.checkPromotion(piece, targetSquare)
-
-        # Castling
-        if isinstance(piece, King):
-            if self.castling(startSquare, targetSquare):
-                diff = targetSquare.col - startSquare.col
-                rook = piece.leftRook if diff < 0 else piece.rightRook
-                if rook.moves:
-                    self.movePiece(rook, rook.moves[-1], playSound=False)
-                else:
-                    pass # The rook has no moves that dont result in a check, so we can't castle
+        # Handle special moves
+        self.handleSpecialMoves(piece, startSquare, targetSquare)
 
         # Register move and clear moves
         piece.moved = True
         piece.clearMoves()
+        self.allMoves.append(move)
+        
+        # Play  sound
 
-
-        # TODO: nu kan vi rokere og promote, så den her logik skal lige omtænkes. Den rigtige lyd må kunne blive indlæst og afspillet på en smart måde
         if playSound:
-        #Load correct sound
-        #TODO: lav en global Sound class med et felt for soundfile, sådan at den kan sættes og overskrives rundt omkring i forskellige metoder
-        #Og afspil den så inde i main loopet
-            if captured_piece is not None:
-                sound_file = "assets/Sounds/CaptureMove.wav"
-                #sound_file = "assets/Sounds/CheckBoomSound.wav"
-            else:
-                sound_file = "assets/Sounds/NormalMove.wav" #TODO: den her skal stå nederst, når de andre er lavet
+            sound = pygame.mixer.Sound('assets/Sounds/NormalMove.wav')
+            if move.capturedPiece is not None:
+                sound = pygame.mixer.Sound('assets/Sounds/CaptureMove.wav')
+            sound.play()
+        
+            
+    def undoMove(self, playSound = True):
+        if not self.allMoves:
+            return
 
-            # TODO: implement the rest of the sounds using methods for check, checkmate, promotion, castle etc.
+        # Get the last move
+        lastMove = self.allMoves.pop()
 
-            # elif isinstance(move, CastleMove):
-            #     sound_file = "assets/Sounds/Castle.wav"
+        # Get the start and target squares
+        startSquare = lastMove.startSquare
+        targetSquare = lastMove.targetSquare
 
-            # elif isinstance(piece, Pawn) and (targetSquare.row == 0 or targetSquare.row == 7):
-            #     sound_file = "assets/Sounds/Promotion.wav"
+        # Get the piece that was moved
+        movedPiece = self.squares[targetSquare.row][targetSquare.col].piece
 
-            # elif self.isCheck():
-            #     sound_file = "assets/Sounds/Check.wav"
-            #     sound_file = "assets/Sounds/CheckBoomSound.wav" :) :) :)
+        # Move the piece back to the start square
+        self.squares[startSquare.row][startSquare.col].piece = movedPiece
+        self.squares[targetSquare.row][targetSquare.col].piece = lastMove.capturedPiece
 
-            # elif self.isCheckmate():
-            #     sound_file = "assets/Sounds/Checkmate.wav"
+        # If the piece was a pawn and it was its first move, set its moved attribute to False
+        if isinstance(movedPiece, Pawn) and movedPiece.moved:
+            movedPiece.moved = False
 
-            #TODO: lav en secret sound for en passant ( ͡° ͜ʖ ͡°)
-            #måske hotel room service af pitbull
+        # TODO: Handle special moves (castling, en passant, promotion)
+        
 
-            # Play sound
-            pygame.mixer.music.load(sound_file)
-            pygame.mixer.music.play()
+        # Play sound
+        if playSound:
+            sound = pygame.mixer.Sound('assets/Sounds/PromoteMove.wav')
+            sound.play()
+        
+    
 
-            # Update last move for rendering
-            self.lastMove = move
+
+    def updateBoard(self, piece, startSquare, targetSquare):
+        self.squares[startSquare.row][startSquare.col].piece = None
+        self.squares[targetSquare.row][targetSquare.col].piece = piece
+
+    def handleSpecialMoves(self, piece, startSquare, targetSquare):
+        if isinstance(piece, Pawn):
+            self.handlePawnMoves(piece, startSquare, targetSquare)
+        elif isinstance(piece, King):
+            self.handleCastling(piece, startSquare, targetSquare)
+
+    def handlePawnMoves(self, piece, startSquare, targetSquare):
+        enPassantSquareIsEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
+        diff = targetSquare.col - startSquare.col
+
+        if diff != 0 and enPassantSquareIsEmpty:
+            self.performEnPassant(piece, startSquare, diff)
+        else:
+            self.checkPromotion(piece, targetSquare)
+
+    def performEnPassant(self, piece, startSquare, diff):
+        self.squares[startSquare.row][startSquare.col + diff].piece = None
+        self.squares[startSquare.row][startSquare.col].piece = piece
+
+    def handleCastling(self, piece, startSquare, targetSquare):
+        if self.castling(startSquare, targetSquare):
+            diff = targetSquare.col - startSquare.col
+            rook = piece.leftRook if diff < 0 else piece.rightRook
+            if rook.moves:
+                self.movePiece(rook, rook.moves[-1], playSound=False)
 
     def checkPromotion(self, piece, targetSquare):
         if (targetSquare.row == 0 or targetSquare.row == 7):
@@ -232,7 +248,6 @@ class ChessBoard:
                                 return False
         #If no move can take the king out of check, it is checkmate
         return True
-
 
 
 

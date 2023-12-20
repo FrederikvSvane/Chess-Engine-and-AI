@@ -4,6 +4,7 @@ class Move:
         #These are tuples of (row, col)
         self.startSquare = startSquare
         self.targetSquare = targetSquare
+        self.capturedPiece = None
 
     def __eq__(self, other):
         return self.startSquare == other.startSquare and self.targetSquare == other.targetSquare

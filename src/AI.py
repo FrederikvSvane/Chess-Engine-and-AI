@@ -1,3 +1,5 @@
+import copy
+
 class ChessAI:
     def __init__(self, board, depth):
         self.board = board
@@ -27,7 +29,7 @@ class ChessAI:
             for move in self.board.getAllPossibleMoves('White'):
                 self.board.makeMove(move)
                 eval = self.minmax(depth - 1, alpha, beta, True)
-                self.board.undoMove(move) # TODO: implementer undo move funktionen. Det er bedst sådan
+                self.board.undoMove(move) # TODO: implementer undo move funktionen. Det er bedst sådan. EDIT: Second thought så er det overhovedet ikke bedst at bruge undo move her, brug et deep copy board. Men implementer undo move alligevel
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
                 if beta <= alpha:
@@ -35,10 +37,11 @@ class ChessAI:
             return min_eval
 
     def find_best_move(self):
+        boardCopy = copy.deepcopy(self.board)
         max_eval = float('-inf')
         best_move = None
-        for move in self.board.getAllPossibleMoves('Black'):
-            self.board.makeMove(move)
+        for move in boardCopy.getAllPossibleMoves('Black'):
+            boardCopy.makeMove(move)
             eval = self.minmax(self.depth - 1, float('-inf'), float('inf'), False)
             self.board.undoMove(move)
             if eval > max_eval:
