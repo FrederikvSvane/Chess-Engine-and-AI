@@ -40,6 +40,7 @@ class Main:
             game.drawPieces(screen)
 
             # Draw piece on top of other stuff when dragging, to avoid clipping
+            
             if dragPiece.isDragging:
                 dragPiece.updateBlit(screen)
 
@@ -116,20 +117,19 @@ class Main:
                     
                     dragPiece.stopDraggingPiece()
 
-                #Making an AI make a move. Right now, the AI can only play as black
-                # if game.currentPlayer == 'Black':
-                #     allMoves = board.getAllPossibleMoves(game.currentPlayer)
-                #     if allMoves:
-                #         #move = board.MinMax(allMoves)
-                #         AImove = random.choice(allMoves)
-                #         AIpiece = board.squares[AImove.startSquare.row][AImove.startSquare.col].piece
-                #         if AIpiece:
-                #             board.movePiece(AIpiece, AImove)
-                #             game.nextTurn()
+                # Making an AI make a move. Right now, the AI can only play as black
+                if game.currentPlayer == 'Black':
+                    AImove = AI.findBestMove()
 
-                #         game.drawChessBoard(screen)
-                #         game.showLastMove(screen)
-                #         game.drawPieces(screen)
+                    if AImove:
+                        AIpiece = board.squares[AImove.startSquare.row][AImove.startSquare.col].piece
+                        if AIpiece:
+                            board.movePiece(AIpiece, AImove)
+                            game.nextTurn()
+
+                        game.drawChessBoard(screen)
+                        game.showLastMove(screen)
+                        game.drawPieces(screen)
 
                 
                 elif event.type == pygame.KEYDOWN:
@@ -141,26 +141,11 @@ class Main:
                     
                     if event.key == pygame.K_z:
                         if board.allMoves:
-                            if game.currentPlayer == 'White': 
-                                # This is a bit of a hack, but it works. 
-                                # You have to undo twice when playing against the AI, otherwise it will only undo the AI's move, 
-                                # and the AI will then move again instantly, making it impossible to undo your own move
-                                board.undoMove()
-                                board.undoMove()
-                                game.nextTurn()
-                                game.nextTurn()
-
-                                game.drawChessBoard(screen)
-                                game.showLastMove(screen)
-                                game.drawPieces(screen)
-                            else:
-                                board.undoMove()
-                                game.nextTurn()
-
-                                game.drawChessBoard(screen)
-                                game.showLastMove(screen)
-                                game.drawPieces(screen)
-
+                            board.undoMove(playSound=True)
+                            game.nextTurn()
+                            game.drawChessBoard(screen)
+                            game.showLastMove(screen)
+                            game.drawPieces(screen)
 
                 # Quit game
                 if event.type == pygame.QUIT:

@@ -103,9 +103,11 @@ class ChessBoard:
             if diff != 0 and enPassantSquareIsEmpty:
                 self.squares[startSquare.row][startSquare.col + diff].piece = None
                 self.squares[targetSquare.row][targetSquare.col].piece = piece
+                move.isEnPassantMove = True
             # Pawn promotion (happens inside an else here, beucase en passant and promotion can not happen at the same time)
             else:    
-                self.checkPromotion(piece, targetSquare)
+                if self.checkPromotion(piece, targetSquare):
+                    move.isPromotionMove = True
 
         # Castling
         if isinstance(piece, King):
@@ -135,7 +137,7 @@ class ChessBoard:
 
 
             
-    def undoMove(self, playSound = True):
+    def undoMove(self, playSound = False):
         if not self.allMoves:
             return
 
@@ -161,50 +163,23 @@ class ChessBoard:
             self.undoMove() #Undo move again, to undo the rook move
         
         if lastMove.isEnPassantMove:
-            pass
+            diff = targetSquare.col - startSquare.col
+            color = 'Black' if movedPiece.color == 'White' else 'White'
+            self.squares[startSquare.row][startSquare.col + diff].piece = Pawn(color)
+
+        if lastMove.isPromotionMove:
+            self.squares[startSquare.row][startSquare.col].piece = Pawn(movedPiece.color)
 
         # Play sound
         if playSound:
-            sound = pygame.mixer.Sound('assets/Sounds/PromoteMove.wav')
-            sound.play()
+            pygame.mixer.Sound('assets/Sounds/PromoteMove.wav').play()
         
-    
-
-
-    def updateBoard(self, piece, startSquare, targetSquare):
-        self.squares[startSquare.row][startSquare.col].piece = None
-        self.squares[targetSquare.row][targetSquare.col].piece = piece
-
-    def handleSpecialMoves(self, piece, startSquare, targetSquare):
-        if isinstance(piece, Pawn):
-            self.handlePawnMoves(piece, startSquare, targetSquare)
-        elif isinstance(piece, King):
-            self.handleCastling(piece, startSquare, targetSquare)
-
-    def handlePawnMoves(self, piece, startSquare, targetSquare):
-        enPassantSquareIsEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
-        diff = targetSquare.col - startSquare.col
-
-        if diff != 0 and enPassantSquareIsEmpty:
-            self.performEnPassant(piece, startSquare, diff)
-        else:
-            self.checkPromotion(piece, targetSquare)
-
-    def performEnPassant(self, piece, startSquare, diff):
-        self.squares[startSquare.row][startSquare.col + diff].piece = None
-        self.squares[startSquare.row][startSquare.col].piece = piece
-
-    def handleCastling(self, piece, startSquare, targetSquare):
-        if self.castling(startSquare, targetSquare):
-            diff = targetSquare.col - startSquare.col
-            rook = piece.leftRook if diff < 0 else piece.rightRook
-            if rook.moves:
-                self.movePiece(rook, rook.moves[-1], playSound=False)
-
     def checkPromotion(self, piece, targetSquare):
         if (targetSquare.row == 0 or targetSquare.row == 7):
             # TODO: add a popup window for choosing a piece to promote to
             self.squares[targetSquare.row][targetSquare.col].piece = Queen(piece.color)
+            return True
+        return False
 
     def validMove(self, piece, move):
         return move in piece.moves
@@ -268,21 +243,16 @@ class ChessBoard:
                 friendlyPiece = self.squares[row][col].piece
                 if isinstance(friendlyPiece, King) and friendlyPiece.color == kingColor:
                     king = friendlyPiece
-                    print(f"{kingColor}'s king found at square {row}, {col}")
                     break
 
         #If the king is not in check, it is not in checkmate
         if not self.isInCheck(king):
-            print("King is not in check")
             return False
-        else:
-            print("King is in check.")
 
 
         #Check if any move can take the king out of check:
 
         #Finding all friendly pieces
-        print("Checking if any moves can take him out of check")
         for row in range(boardSize):
             for col in range(boardSize):
                 copyPiece = copy.deepcopy(self.squares[row][col].piece)
@@ -291,18 +261,20 @@ class ChessBoard:
                     self.possibleMoves(copyPiece, row, col, normalCall=True)
                     if copyPiece.moves is not None:
                         for move in copyPiece.moves:
-                            print(f"checking move {move} for piece {copyPiece.name}")
                             tempBoard = copy.deepcopy(self)
                             #This tries every single legal move of every single piece
                             tempBoard.movePiece(copyPiece, move, playSound=False)
                             if not tempBoard.isInCheck(king):
-                                print(f"Move found that takes king out of check!")
-                                print(f"The move is {copyPiece} from {move.startSquare.row}, {move.startSquare.col} to {move.targetSquare.row}, {move.targetSquare.col}")
                                 return False
         #If no move can take the king out of check, it is checkmate
         return True
 
-
+    def convertToChessCoordinates(self, row, col):
+        # Convert the column to a letter A-H
+        col = chr(col + ord('A'))
+        # Convert the row to a number 1-8 (we add 1 because chess rows start at 1, not 0)
+        row = 8 - row
+        return col + str(row)
 
 # -------------- POSSIBLE MOVES -------------------
 
