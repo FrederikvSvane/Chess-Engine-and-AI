@@ -59,31 +59,81 @@ class ChessBoard:
         # self.squares[3][5] = BoardSquare(4, 3, Rook('Black'))
         # self.squares[5][3] = BoardSquare(3, 3, King('White'))  
 
+    # def movePiece(self, piece, move, playSound=True):
+    #     startSquare = move.startSquare
+    #     targetSquare = move.targetSquare
+
+    #     move.capturedPiece = self.squares[targetSquare.row][targetSquare.col].piece
+
+    #     # Updates the backend board
+    #     self.updateBoard(piece, startSquare, targetSquare)
+
+    #     # Handle special moves
+    #     self.handleSpecialMoves(piece, startSquare, targetSquare)
+
+    #     # Register move and clear moves
+    #     piece.moved = True
+    #     piece.clearMoves()
+    #     self.allMoves.append(move)
+        
+    #     # Play  sound
+
+    #     if playSound:
+    #         sound = pygame.mixer.Sound('assets/Sounds/NormalMove.wav')
+    #         if move.capturedPiece is not None:
+    #             sound = pygame.mixer.Sound('assets/Sounds/CaptureMove.wav')
+    #         sound.play()
+        
     def movePiece(self, piece, move, playSound=True):
         startSquare = move.startSquare
         targetSquare = move.targetSquare
 
         move.capturedPiece = self.squares[targetSquare.row][targetSquare.col].piece
 
-        # Updates the backend board
-        self.updateBoard(piece, startSquare, targetSquare)
+        enPassantSquareIsEmpty = self.squares[targetSquare.row][targetSquare.col].isEmpty()
 
-        # Handle special moves
-        self.handleSpecialMoves(piece, startSquare, targetSquare)
+        # Updates the backend board
+        captured_piece = self.squares[targetSquare.row][targetSquare.col].piece
+        self.squares[startSquare.row][startSquare.col].piece = None
+        self.squares[targetSquare.row][targetSquare.col].piece = piece
+
+        if isinstance(piece, Pawn):
+            # En passant capture
+            diff = targetSquare.col - startSquare.col
+            if diff != 0 and enPassantSquareIsEmpty:
+                self.squares[startSquare.row][startSquare.col + diff].piece = None
+                self.squares[targetSquare.row][targetSquare.col].piece = piece
+            # Pawn promotion (happens inside an else here, beucase en passant and promotion can not happen at the same time)
+            else:    
+                self.checkPromotion(piece, targetSquare)
+
+        # Castling
+        if isinstance(piece, King):
+            if self.castling(startSquare, targetSquare):
+                move.isCastlingMove = True
+                diff = targetSquare.col - startSquare.col
+                rook = piece.leftRook if diff < 0 else piece.rightRook
+                if rook.moves:
+                    self.movePiece(rook, rook.moves[-1], playSound=False)
+                else:
+                    pass # The rook has no moves that dont result in a check, so we can't castle
 
         # Register move and clear moves
+        self.allMoves.append(move)
         piece.moved = True
         piece.clearMoves()
-        self.allMoves.append(move)
-        
-        # Play  sound
 
         if playSound:
-            sound = pygame.mixer.Sound('assets/Sounds/NormalMove.wav')
-            if move.capturedPiece is not None:
-                sound = pygame.mixer.Sound('assets/Sounds/CaptureMove.wav')
-            sound.play()
-        
+            if captured_piece is not None:
+                sound_file = "assets/Sounds/CaptureMove.wav"
+            else:
+                sound_file = "assets/Sounds/NormalMove.wav"
+
+            # Play sound
+            pygame.mixer.music.load(sound_file)
+            pygame.mixer.music.play()
+
+
             
     def undoMove(self, playSound = True):
         if not self.allMoves:
@@ -107,8 +157,11 @@ class ChessBoard:
         if isinstance(movedPiece, Pawn) and movedPiece.moved:
             movedPiece.moved = False
 
-        # TODO: Handle special moves (castling, en passant, promotion)
+        if lastMove.isCastlingMove:
+            self.undoMove() #Undo move again, to undo the rook move
         
+        if lastMove.isEnPassantMove:
+            pass
 
         # Play sound
         if playSound:
@@ -482,7 +535,7 @@ class ChessBoard:
                             #King move
                             startSquare = BoardSquare(row, col)
                             targetSquare = BoardSquare(row, 2)   
-                            kingMove = Move(startSquare, targetSquare) 
+                            kingMove = Move(startSquare, targetSquare)
 
                             if normalCall:
                                 if not self.moveWillResultInCheck(piece, kingMove) and not self.moveWillResultInCheck(leftRook, rookMove):
