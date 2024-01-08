@@ -20,7 +20,7 @@ class Main:
         self.screen = pygame.display.set_mode((windowWidth, windowHeight))
         pygame.display.set_caption("Ultra Mega Chess 9000")
         self.game = Game()
-        self.AI = ChessAI(self.game.board, 3)
+        self.AI = ChessAI(self.game.board, 4)
 
     def mainloop(self) -> None:
 
@@ -137,6 +137,7 @@ class Main:
                         game.resetGame()
                         game = self.game
                         board = self.game.board
+                        AI = ChessAI(board, 4)
                         dragPiece = self.game.dragPiece
                     
                     if event.key == pygame.K_z:

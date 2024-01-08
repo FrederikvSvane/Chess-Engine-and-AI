@@ -1,4 +1,5 @@
 import copy
+from GlobalConstants import *
 
 class ChessAI:
     def __init__(self, board, depth):
@@ -7,11 +8,32 @@ class ChessAI:
 
     def evalBoard(self, board):
         score = 0
-        for row in board.squares:
-            for square in row:
+        for row in range(boardSize):
+            for col in range(boardSize):
+                square = board.squares[row][col]
                 if square.hasPiece():
                     piece = square.piece
-                    score += piece.value
+                    piece_value = piece.value
+
+                    # TODO er ikke sikker på at vi også skal kigge på de hvides placering. Det er jo for at give incitament til at rykke egne brikker frem.
+                    if piece.name == 'Pawn':
+                        score_table = whitePawnScores if piece.color == 'White' else blackPawnScores
+                    elif piece.name == 'Knight':
+                        score_table = whiteKnightScores if piece.color == 'White' else blackKnightScores
+                    elif piece.name == 'Bishop':
+                        score_table = whiteBishopScores if piece.color == 'White' else blackBishopScores
+                    elif piece.name == 'Rook':
+                        score_table = whiteRookScores if piece.color == 'White' else blackRookScores
+                    elif piece.name == 'Queen':
+                        score_table = whiteQueenScores if piece.color == 'White' else blackQueenScores
+                    elif piece.name == 'King':
+                        # Assuming you might switch to king end game scores at some point
+                        score_table = whiteKingMiddleGameScores if piece.color == 'White' else blackKingMiddleGameScores
+
+                    # Adjust the score based on the piece's position
+                    position_score = score_table[row][col]
+                    score += piece_value + position_score
+
         return score
 
     def minmax(self, depth, alpha, beta, maximizing_player, board):
@@ -58,12 +80,13 @@ class ChessAI:
                 if eval < max_eval:
                     max_eval = eval
                     best_move = move
+
+
+        if best_move is not None:
+            targetRow = best_move.targetSquare.row
+            targetCol = best_move.targetSquare.col
+            piece = boardCopy.squares[best_move.startSquare.row][best_move.startSquare.col].piece
+            if piece is not None:   
+                print(f"Best move is {piece.name} {boardCopy.convertToChessCoordinates(targetRow, targetCol)}. Board eval: {max_eval}")
             
-            if best_move is not None:
-                startRow = best_move.startSquare.row
-                startCol = best_move.startSquare.col
-                targetRow = best_move.targetSquare.row
-                targetCol = best_move.targetSquare.col
-                print(f"AI: I think the best possible move is {piece.name} from {boardCopy.convertToChessCoordinates(startRow,startCol)} to {boardCopy.convertToChessCoordinates(targetRow, targetCol)} with a resulting board evaluation of {max_eval}")
-            
-            return best_move
+        return best_move

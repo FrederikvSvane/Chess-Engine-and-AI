@@ -29,7 +29,7 @@ class Pawn(Piece):
         self.direction = -1 if color == 'White' else 1
         self.enPassant = False
         #TODO: potential optimization here. Float could be replaced with int, potentially making MinMax faster
-        super().__init__(name='Pawn', color=color, value=1.0)
+        super().__init__(name='Pawn', color=color, value=100)
 
 
 
@@ -37,25 +37,25 @@ class Pawn(Piece):
 
 class Knight(Piece):
     def __init__(self, color: str):
-        super().__init__(name='Knight', color=color, value=3.0)
+        super().__init__(name='Knight', color=color, value=320)
 
 class Bishop(Piece):
     def __init__(self, color: str):
-        super().__init__(name='Bishop', color=color, value=3.0)
+        super().__init__(name='Bishop', color=color, value=330)
 
 
 class Rook(Piece):
     def __init__(self, color: str):
-        super().__init__(name='Rook', color=color, value=5.0)
+        super().__init__(name='Rook', color=color, value=500)
 
 
 class Queen(Piece):
     def __init__(self, color: str):
-        super().__init__(name='Queen', color=color, value=9.0)
+        super().__init__(name='Queen', color=color, value=900)
 
 
 class King(Piece):
     def __init__(self, color: str):
         self.leftRook = None
         self.rightRook = None
-        super().__init__(name='King', color=color, value=10000.0)
+        super().__init__(name='King', color=color, value=20000)
